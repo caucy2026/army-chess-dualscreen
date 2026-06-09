@@ -5,7 +5,6 @@ import android.hardware.display.DisplayManager
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Bundle
-import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.Display
 import android.view.LayoutInflater
@@ -22,7 +21,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.huanglong.pad.databinding.ActivityMainBinding
 import com.huanglong.pad.game.*
-import java.util.Locale
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -67,8 +65,11 @@ class MainActivity : AppCompatActivity() {
     private var sndBoom = 0
     private var sndWin = 0
 
-    // 语音播报 TTS 引擎
-    private var tts: TextToSpeech? = null
+    // 本地裁决搞笑语音音效 ID
+    private var sndTtsAttackerWon = 0
+    private var sndTtsDefenderWon = 0
+    private var sndTtsBothDied = 0
+    private var sndTtsFlagCaptured = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,7 +81,6 @@ class MainActivity : AppCompatActivity() {
         binding.boardBackgroundView.perspective = Player.A
 
         initSound()
-        initTTS()
         initGameData()
         initBoardGrid()
         initTrayRecyclerView()
@@ -106,11 +106,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         soundPool?.release()
         soundPool = null
-        tts?.let {
-            it.stop()
-            it.shutdown()
-        }
-        tts = null
     }
 
     /**
@@ -419,9 +414,8 @@ class MainActivity : AppCompatActivity() {
             showBattleDialog(attacker, result)
             gamePresentation?.showBattleDialog(attacker, result)
 
-            // 语音播报：谁主动出击就播报谁那边的文案
-            val textToSpeak = battleResultText(result, attacker, attacker.owner)
-            speakText(textToSpeak)
+            // 语音播报：谁主动出击就播放谁那边的本地预置搞笑音频（0延迟）
+            playTtsVoice(result)
 
             boardState.remove(from)
             when (result) {
@@ -467,32 +461,31 @@ class MainActivity : AppCompatActivity() {
             .setUsage(AudioAttributes.USAGE_GAME)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
-        val sp = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(attrs).build()
+        val sp = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(attrs).build()
         sndClash = sp.load(this, R.raw.battle_clash, 1)
         sndBoom = sp.load(this, R.raw.battle_boom, 1)
         sndWin = sp.load(this, R.raw.battle_win, 1)
+        sndTtsAttackerWon = sp.load(this, R.raw.tts_attacker_won, 1)
+        sndTtsDefenderWon = sp.load(this, R.raw.tts_defender_won, 1)
+        sndTtsBothDied = sp.load(this, R.raw.tts_both_died, 1)
+        sndTtsFlagCaptured = sp.load(this, R.raw.tts_flag_captured, 1)
         soundPool = sp
     }
 
     /**
-     * 初始化语音播报 TTS 引擎
+     * 播放主动出击方视角的本地预置搞笑裁决语音（0延迟）
      */
-    private fun initTTS() {
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val result = tts?.setLanguage(Locale.CHINESE)
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    Log.e("TTS", "Language is not supported or missing data")
-                }
-            } else {
-                Log.e("TTS", "TTS Initialization failed!")
-            }
+    private fun playTtsVoice(result: BattleResult) {
+        val sp = soundPool ?: return
+        val id = when (result) {
+            BattleResult.ATTACKER_WON -> sndTtsAttackerWon
+            BattleResult.DEFENDER_WON -> sndTtsDefenderWon
+            BattleResult.BOTH_DIED -> sndTtsBothDied
+            BattleResult.FLAG_CAPTURED -> sndTtsFlagCaptured
         }
-    }
-
-    private fun speakText(text: String) {
-        val cleanText = text.replace(Regex("[^\\u0000-\\uFFFF]"), "").trim()
-        tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, "BattleTTS")
+        if (id != 0) {
+            sp.play(id, 1f, 1f, 1, 0, 1f)
+        }
     }
 
     /**

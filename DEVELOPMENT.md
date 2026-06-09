@@ -68,6 +68,15 @@
   * 玩家 A 校验下半区 `Row 6-11`，地雷在最后两排 `Row 10-11`，军旗在大本营 `Position(11,1)/(11,3)`，炸弹非前排。
   * 玩家 B 校验上半区 `Row 0-5`，地雷在最前两排 `Row 0-1`，军旗在大本营 `Position(0,1)/(0,3)`，炸弹非前排。
 
+### 6. 逻辑与系统踩坑：Android 11+ 包可见性限制导致 TextToSpeech 语音合成引擎初始化失败
+* **问题描述**：对决裁决文字语音播报在 Android 11+ 上直接报错初始化失败（`TTS Initialization failed!`），没有任何发声。
+* **原因分析**：本项目的 `targetSdkVersion` 设置为 33。自 Android 11（API 30）起，系统引入了包可见性（Package Visibility）限制。如果应用在 `AndroidManifest.xml` 中未显式使用 `<queries>` 标签声明 `android.intent.action.TTS_SERVICE`，系统将阻止应用绑定到底层系统 TTS 服务。
+* **解决方案**：在 [AndroidManifest.xml](file:///E:/pad/app/src/main/AndroidManifest.xml) 的 `<manifest>` 根标签内添加 `<queries>` 声明，以允许应用绑定系统语音引擎服务。
+
+### 7. 逻辑与系统踩坑：精简版平板系统缺少 TTS 语音引擎包，且原生 TTS 合成延迟大、声音机械生硬
+* **问题描述**：添加包可见性后部分系统（因厂家精简）仍无法播报，日志显式初始化依然失败（`settings get secure tts_default_synth` 返回 null），这表明底盘完全无 TTS 服务。此外，动态合成文字语音具有约 1 秒左右的明显延迟，碰子对决时有明显的音画不同步和卡顿感。
+* **解决方案**：放弃了实时 TTS 语音合成，转而采用**“本地预置搞笑音频 + SoundPool 内存预缓存混音播放”**的高响应方案。通过公开接口，将 4 种搞笑文案预生成高保真 MP3 文件存入项目的 [res/raw 资源目录](file:///E:/pad/app/src/main/res/raw) 下。在 `SoundPool` 中提升并发通道数为 8 并加入内存预加载，在碰子瞬间实现零延迟、高保真的对决结果播报，完美摆脱了对系统 TTS 引擎服务的依赖。
+
 ---
 
 ## 🚀 常用调试构建与实机测试命令
