@@ -1,0 +1,26 @@
+# Android / Gradle 构建产物
+*.iml
+.gradle/
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.ap_
+*.aab
+
+# 本地环境配置（含本机 SDK 路径，勿提交）
+local.properties
+
+# IDE
+/.idea/
+*.iws
+*.ipr
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 调试临时文件（uiautomator dump 等）
+window_dump.xml

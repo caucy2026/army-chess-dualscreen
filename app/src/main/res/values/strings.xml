@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">双屏暗棋军棋</string>
+    <string name="player_a_title">玩家 A (主屏)</string>
+    <string name="player_b_title">玩家 B (副屏)</string>
+    <string name="ready_btn_text">完成布阵</string>
+    <string name="reset_btn_text">重置</string>
+    <string name="auto_layout_btn_text">一键布阵</string>
+    <string name="battle_vs_title">战局裁决</string>
+    <string name="vs_text">VS</string>
+</resources>

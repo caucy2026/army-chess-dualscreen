@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/bg_dark"
+    android:padding="16dp">
+
+    <!-- 左侧：控制面板与棋子托盘 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@drawable/glass_panel_bg"
+        android:padding="16dp"
+        android:layout_marginEnd="16dp">
+
+        <!-- 顶部游戏状态 -->
+        <TextView
+            android:id="@+id/tv_role_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/player_a_title"
+            android:textColor="@color/color_a"
+            android:textSize="22sp"
+            android:fontFamily="sans-serif-black"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="游戏正在初始化..."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:background="@color/border_color" />
+
+        <!-- 轮次指示器 -->
+        <TextView
+            android:id="@+id/tv_turn_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="等待双方玩家就绪..."
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:padding="8dp"
+            android:background="@color/bg_dark" />
+
+        <!-- 控制按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btn_auto_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/auto_layout_btn_text"
+                android:backgroundTint="@color/cell_railway"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btn_ready"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.2"
+                android:text="@string/ready_btn_text"
+                android:backgroundTint="@color/color_a"
+                android:textColor="@color/black" />
+
+            <Button
+                android:id="@+id/btn_reset"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/reset_btn_text"
+                android:backgroundTint="@color/cell_hq"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- 待部署托盘 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="待部署棋子 (点击选中，再点棋盘放置)"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:layout_marginBottom="8dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_piece_tray"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scrollbars="vertical" />
+    </LinearLayout>
+
+    <!-- 右侧：棋盘容器 -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.5"
+        android:background="@drawable/glass_panel_bg"
+        android:padding="8dp">
+
+        <FrameLayout
+            android:id="@+id/board_layout_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center">
+
+            <!-- 棋盘连线背景图层 (自定义绘制) -->
+            <com.huanglong.pad.game.BoardBackgroundView
+                android:id="@+id/board_background_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- 12x5 透明棋格交互网格 -->
+            <GridLayout
+                android:id="@+id/board_grid_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:rowCount="12"
+                android:columnCount="5"
+                android:orientation="horizontal" />
+        </FrameLayout>
+    </FrameLayout>
+</LinearLayout>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="2dp">
+
+    <!-- 行军路径高亮指示圆点 -->
+    <View
+        android:id="@+id/v_cell_highlight"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center"
+        android:background="@drawable/cell_highlight_dot"
+        android:visibility="gone" />
+
+    <!-- 棋子实体文本框 (四周留白，露出底层铁路/公路路线) -->
+    <TextView
+        android:id="@+id/tv_piece_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="5dp"
+        android:gravity="center"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:elevation="4dp"
+        android:visibility="gone" />
+</FrameLayout>

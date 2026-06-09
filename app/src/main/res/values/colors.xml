@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基础黑曜石主题背景 -->
+    <color name="bg_dark">#0B0E17</color>
+    <color name="bg_panel">#1E293B</color>
+    <color name="border_color">#334155</color>
+
+    <!-- 玩家 A (主屏) 霓虹冰蓝 -->
+    <color name="color_a">#00E5FF</color>
+    <color name="color_a_glow">#6600E5FF</color>
+    <color name="color_a_bg">#1A00E5FF</color>
+
+    <!-- 玩家 B (副屏) 霓虹极光绿 -->
+    <color name="color_b">#39FF14</color>
+    <color name="color_b_glow">#6639FF14</color>
+    <color name="color_b_bg">#1A39FF14</color>
+
+    <!-- 战力判定红色 -->
+    <color name="color_vs">#EF4444</color>
+
+    <!-- 系统文字颜色 -->
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+
+    <!-- 棋盘网格特定颜色 -->
+    <color name="cell_station">#1E293B</color>
+    <color name="cell_railway">#2D3748</color>
+    <color name="cell_camp">#1A202C</color>
+    <color name="cell_hq">#0F172A</color>
+    
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="gray">#888888</color>
+</resources>
