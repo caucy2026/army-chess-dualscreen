@@ -5,6 +5,8 @@ import android.hardware.display.DisplayManager
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.view.Display
 import android.view.LayoutInflater
 import android.view.View
@@ -20,6 +22,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.huanglong.pad.databinding.ActivityMainBinding
 import com.huanglong.pad.game.*
+import java.util.Locale
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -64,6 +67,9 @@ class MainActivity : AppCompatActivity() {
     private var sndBoom = 0
     private var sndWin = 0
 
+    // 语音播报 TTS 引擎
+    private var tts: TextToSpeech? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -74,6 +80,7 @@ class MainActivity : AppCompatActivity() {
         binding.boardBackgroundView.perspective = Player.A
 
         initSound()
+        initTTS()
         initGameData()
         initBoardGrid()
         initTrayRecyclerView()
@@ -99,6 +106,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         soundPool?.release()
         soundPool = null
+        tts?.let {
+            it.stop()
+            it.shutdown()
+        }
+        tts = null
     }
 
     /**
@@ -407,6 +419,10 @@ class MainActivity : AppCompatActivity() {
             showBattleDialog(attacker, result)
             gamePresentation?.showBattleDialog(attacker, result)
 
+            // 语音播报：谁主动出击就播报谁那边的文案
+            val textToSpeak = battleResultText(result, attacker, attacker.owner)
+            speakText(textToSpeak)
+
             boardState.remove(from)
             when (result) {
                 BattleResult.ATTACKER_WON -> {
@@ -456,6 +472,27 @@ class MainActivity : AppCompatActivity() {
         sndBoom = sp.load(this, R.raw.battle_boom, 1)
         sndWin = sp.load(this, R.raw.battle_win, 1)
         soundPool = sp
+    }
+
+    /**
+     * 初始化语音播报 TTS 引擎
+     */
+    private fun initTTS() {
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = tts?.setLanguage(Locale.CHINESE)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e("TTS", "Language is not supported or missing data")
+                }
+            } else {
+                Log.e("TTS", "TTS Initialization failed!")
+            }
+        }
+    }
+
+    private fun speakText(text: String) {
+        val cleanText = text.replace(Regex("[^\\u0000-\\uFFFF]"), "").trim()
+        tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, "BattleTTS")
     }
 
     /**
