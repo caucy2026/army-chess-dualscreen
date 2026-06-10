@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <!-- 敌方暗棋"天窗"：醒目的霓虹红渐变填充，靠颜色突出而非描边 -->
-    <gradient
-        android:startColor="#E6F05252"
-        android:endColor="#E6B91C1C"
-        android:angle="270" />
-    <corners android:radius="6dp" />
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:top="2dp" android:left="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp"/>
+            <solid android:color="#BE123C"/>
+        </shape>
+    </item>
+    <item android:bottom="2dp" android:right="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp"/>
+            <gradient android:startColor="#FB7185" android:endColor="#E11D48" android:angle="135"/>
+            <stroke android:width="1dp" android:color="#FDA4AF"/>
+        </shape>
+    </item>
+</layer-list>

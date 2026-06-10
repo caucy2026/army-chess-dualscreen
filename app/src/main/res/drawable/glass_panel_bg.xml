@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <!-- 半透明深色面板背景，配合系统毛玻璃滤镜使用 -->
-    <solid android:color="#F21E293B" />
-    
-    <!-- 极轻柔的微白描边，营造玻璃反光边缘效果 -->
-    <stroke
-        android:width="1.5dp"
-        android:color="#1AFFFFFF" />
-    
-    <!-- 舒适的圆角 -->
-    <corners android:radius="16dp" />
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#E6FFFFFF"/>
+    <corners android:radius="16dp"/>
+    <stroke android:width="1dp" android:color="#33000000"/>
 </shape>

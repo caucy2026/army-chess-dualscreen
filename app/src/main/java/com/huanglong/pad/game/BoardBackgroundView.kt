@@ -21,7 +21,7 @@ class BoardBackgroundView @JvmOverloads constructor(
 
     // 1. 公路普通线画笔
     private val roadPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#5B7AA8") // 提亮的灰蓝色公路连接线，使整张路网清晰可见
+        color = Color.parseColor("#94A3B8") // 提亮的灰蓝色公路连接线，使整张路网清晰可见
         strokeWidth = 4.5f
         style = Paint.Style.STROKE
     }
@@ -36,7 +36,7 @@ class BoardBackgroundView @JvmOverloads constructor(
 
     // 3. 铁路轨道底黑色基座线画笔
     private val railBasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#0B0E17") // 暗黑背景底色，用作黑色轨枕背景
+        color = Color.parseColor("#CBD5E1") // 暗黑背景底色，用作黑色轨枕背景
         strokeWidth = 12f
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
@@ -44,7 +44,7 @@ class BoardBackgroundView @JvmOverloads constructor(
 
     // 4. 铁路轨道核心枕木线画笔 (黑白相间效果)
     private val railTrackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#E2E8F0") // 象牙白相间轨枕线
+        color = Color.parseColor("#FFFFFF") // 象牙白相间轨枕线
         strokeWidth = 10f
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
@@ -53,13 +53,13 @@ class BoardBackgroundView @JvmOverloads constructor(
 
     // 5. 普通格子(兵站)边框画笔
     private val stationBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#1E293B") // 幽暗的 Slate 800 边框色
+        color = Color.parseColor("#E2E8F0") // 幽暗的 Slate 800 边框色
         strokeWidth = 2.5f
         style = Paint.Style.STROKE
     }
 
     private val stationFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#0A1E293B") // 极淡的圆角矩形半透明填充
+        color = Color.parseColor("#33FFFFFF") // 极淡的圆角矩形半透明填充
         style = Paint.Style.FILL
     }
 
@@ -82,12 +82,12 @@ class BoardBackgroundView @JvmOverloads constructor(
     }
 
     private val mountainFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#16213A") // 山界圆圈深蓝填充，区别于普通兵站
+        color = Color.parseColor("#E0F2FE") // 山界圆圈深蓝填充，区别于普通兵站
         style = Paint.Style.FILL
     }
 
     private val mountainStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#64748B")
+        color = Color.parseColor("#94A3B8")
         strokeWidth = 3f
         style = Paint.Style.STROKE
     }
@@ -99,14 +99,14 @@ class BoardBackgroundView @JvmOverloads constructor(
 
     // 8. 各种文字画笔
     private val labelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#475569") // 兵站、大本营背景文字颜色 (灰色)
+        color = Color.parseColor("#64748B") // 兵站、大本营背景文字颜色 (灰色)
         textSize = 28f
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
     }
 
     private val riverTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#8FA3BF") // 山界圆圈印章文字颜色
+        color = Color.parseColor("#38BDF8") // 山界圆圈印章文字颜色
         textSize = 26f
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
@@ -130,9 +130,9 @@ class BoardBackgroundView @JvmOverloads constructor(
             ContextCompat.getColor(context, R.color.color_b)
         }
         val glowColor = if (perspective == Player.A) {
-            Color.parseColor("#3300E5FF")
+            Color.parseColor("#1A0EA5E9")
         } else {
-            Color.parseColor("#3339FF14")
+            Color.parseColor("#1A10B981")
         }
 
         railGlowPaint.color = glowColor

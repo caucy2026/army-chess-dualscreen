@@ -1,17 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.DoubleScreenChess" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
+    <style name="Theme.DoubleScreenChess" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/color_a</item>
         <item name="colorPrimaryVariant">@color/color_a_glow</item>
-        <item name="colorOnPrimary">@color/black</item>
-        <!-- Secondary brand color. -->
+        <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/color_b</item>
         <item name="colorSecondaryVariant">@color/color_b_glow</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
+        <item name="colorOnSecondary">@color/white</item>
         <item name="android:statusBarColor">@color/bg_dark</item>
-        <!-- Background and panel colors. -->
+        <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowBackground">@color/bg_dark</item>
     </style>
 </resources>
