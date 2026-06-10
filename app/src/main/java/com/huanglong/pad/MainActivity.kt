@@ -696,33 +696,33 @@ class MainActivity : AppCompatActivity() {
         // 乌龟阵 (重防守)
         val turtle = listOf(
             PLATOON, COMPANY, ENGINEER, PLATOON, COMPANY,
-            COMMANDER, REGIMENT, BRIGADE, BATTALION, PLATOON,
+            COMMANDER, REGIMENT, BRIGADE, ENGINEER, PLATOON,
             BOMB,    DIVISION, BATTALION,
-            REGIMENT, CORPS, BRIGADE, BOMB,
+            REGIMENT, CORPS, ENGINEER, BOMB,
             DIVISION, LANDMINE, LANDMINE,
-            ENGINEER, COMPANY, LANDMINE, FLAG, ENGINEER
+            BATTALION, COMPANY, LANDMINE, FLAG, BRIGADE
         )
         formations.add(Pair("乌龟阵 (重防)", turtle))
         
         // 飞花阵 (重进攻) - 司令居中，第一排无军长师长
         val blitz = listOf(
             COMPANY, PLATOON, COMMANDER, PLATOON, COMPANY,
-            BRIGADE, REGIMENT, DIVISION, REGIMENT, BRIGADE,
+            ENGINEER, REGIMENT, DIVISION, REGIMENT, BRIGADE,
             BOMB, DIVISION, BOMB,
-            BATTALION, CORPS, BATTALION, COMPANY,
+            ENGINEER, CORPS, BATTALION, COMPANY,
             ENGINEER, LANDMINE, LANDMINE,
-            ENGINEER, FLAG, LANDMINE, PLATOON, ENGINEER
+            BRIGADE, FLAG, LANDMINE, PLATOON, BATTALION
         )
         formations.add(Pair("飞花阵 (重攻)", blitz))
         
         // 均衡阵 (攻守兼备) - 司令在第一排两边，第一排无军长师长
         val balance = listOf(
             COMMANDER, COMPANY, ENGINEER, PLATOON, COMPANY,
-            DIVISION, PLATOON, BATTALION, BRIGADE, REGIMENT,
+            DIVISION, PLATOON, ENGINEER, BRIGADE, REGIMENT,
             BOMB, CORPS, COMPANY,
-            BRIGADE, REGIMENT, DIVISION, BOMB,
+            BRIGADE, ENGINEER, DIVISION, BOMB,
             BATTALION, LANDMINE, LANDMINE,
-            ENGINEER, PLATOON, LANDMINE, FLAG, ENGINEER
+            BATTALION, PLATOON, LANDMINE, FLAG, REGIMENT
         )
         formations.add(Pair("均衡阵 (攻守兼备)", balance))
 
