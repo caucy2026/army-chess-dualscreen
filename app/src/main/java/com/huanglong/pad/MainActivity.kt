@@ -555,16 +555,17 @@ class MainActivity : AppCompatActivity() {
             val result = GameEngine.resolveBattle(attacker, defender)
             
             // 交战音效 + 弹出裁决浮窗（主屏 A 与副屏 B 同步显示）
-            playBattleSound(result)
+            playBattleSound(result, attacker.owner)
             
-            val textIndex = (0..9).random()
+            // 玩家A的专属语音/文案在 0..4，玩家B的在 5..9
+            val textIndex = if (attacker.owner == Player.A) (0..4).random() else (5..9).random()
             val resultText = getBattleResultText(result, textIndex)
             
             showBattleDialog(attacker, defender, resultText)
             gamePresentation?.showBattleDialog(attacker, defender, resultText)
 
             // 语音播报：谁主动出击就播放谁那边的本地预置搞笑音频（0延迟）
-            playTtsVoice(result, textIndex)
+            playTtsVoice(result, textIndex, attacker.owner)
 
             boardState.remove(from)
             when (result) {
@@ -606,14 +607,16 @@ class MainActivity : AppCompatActivity() {
     /**
      * 交战音效：依据裁决结果播放不同提示音（夺旗胜利音 / 同归于尽双响 / 普通碰子）
      */
-    private fun playBattleSound(result: BattleResult) {
+    private fun playBattleSound(result: BattleResult, attackerPlayer: Player) {
         val sp = soundPool ?: return
         val id = when (result) {
             BattleResult.FLAG_CAPTURED -> sndWin
             BattleResult.BOTH_DIED -> sndBoom
             else -> sndClash
         }
-        if (id != 0) sp.play(id, 1f, 1f, 1, 0, 1f)
+        if (id != 0) {
+            sp.play(id, 1f, 1f, 1, 0, 1f)
+        }
     }
 
     /**
@@ -644,7 +647,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * 播放主动出击方视角的本地预置搞笑裁决语音（0延迟）
      */
-    private fun playTtsVoice(result: BattleResult, textIndex: Int) {
+    private fun playTtsVoice(result: BattleResult, textIndex: Int, attackerPlayer: Player) {
         val sp = soundPool ?: return
         val list = when (result) {
             BattleResult.ATTACKER_WON -> sndTtsAttackerWon
