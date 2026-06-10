@@ -72,10 +72,10 @@ class MainActivity : AppCompatActivity() {
     private var sndWin = 0
 
     // 本地裁决搞笑语音音效 ID
-    private var sndTtsAttackerWon = 0
-    private var sndTtsDefenderWon = 0
-    private var sndTtsBothDied = 0
-    private var sndTtsFlagCaptured = 0
+    private val sndTtsAttackerWon = mutableListOf<Int>()
+    private val sndTtsDefenderWon = mutableListOf<Int>()
+    private val sndTtsBothDied = mutableListOf<Int>()
+    private val sndTtsFlagCaptured = mutableListOf<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -443,11 +443,15 @@ class MainActivity : AppCompatActivity() {
             
             // 交战音效 + 弹出裁决浮窗（主屏 A 与副屏 B 同步显示）
             playBattleSound(result)
-            showBattleDialog(attacker, result)
-            gamePresentation?.showBattleDialog(attacker, result)
+            
+            val textIndex = (0..9).random()
+            val resultText = getBattleResultText(result, textIndex)
+            
+            showBattleDialog(attacker, resultText)
+            gamePresentation?.showBattleDialog(attacker, resultText)
 
             // 语音播报：谁主动出击就播放谁那边的本地预置搞笑音频（0延迟）
-            playTtsVoice(result)
+            playTtsVoice(result, textIndex)
 
             boardState.remove(from)
             when (result) {
@@ -511,46 +515,73 @@ class MainActivity : AppCompatActivity() {
         sndClash = sp.load(this, R.raw.battle_clash, 1)
         sndBoom = sp.load(this, R.raw.battle_boom, 1)
         sndWin = sp.load(this, R.raw.battle_win, 1)
-        sndTtsAttackerWon = sp.load(this, R.raw.tts_attacker_won, 1)
-        sndTtsDefenderWon = sp.load(this, R.raw.tts_defender_won, 1)
-        sndTtsBothDied = sp.load(this, R.raw.tts_both_died, 1)
-        sndTtsFlagCaptured = sp.load(this, R.raw.tts_flag_captured, 1)
+        for (i in 0 until 10) {
+            val idAtt = resources.getIdentifier("tts_attacker_won_$i", "raw", packageName)
+            if (idAtt != 0) sndTtsAttackerWon.add(sp.load(this, idAtt, 1))
+            val idDef = resources.getIdentifier("tts_defender_won_$i", "raw", packageName)
+            if (idDef != 0) sndTtsDefenderWon.add(sp.load(this, idDef, 1))
+            val idBoth = resources.getIdentifier("tts_both_died_$i", "raw", packageName)
+            if (idBoth != 0) sndTtsBothDied.add(sp.load(this, idBoth, 1))
+            val idFlag = resources.getIdentifier("tts_flag_captured_$i", "raw", packageName)
+            if (idFlag != 0) sndTtsFlagCaptured.add(sp.load(this, idFlag, 1))
+        }
         soundPool = sp
     }
 
     /**
      * 播放主动出击方视角的本地预置搞笑裁决语音（0延迟）
      */
-    private fun playTtsVoice(result: BattleResult) {
+    private fun playTtsVoice(result: BattleResult, textIndex: Int) {
         val sp = soundPool ?: return
-        val id = when (result) {
+        val list = when (result) {
             BattleResult.ATTACKER_WON -> sndTtsAttackerWon
             BattleResult.DEFENDER_WON -> sndTtsDefenderWon
             BattleResult.BOTH_DIED -> sndTtsBothDied
             BattleResult.FLAG_CAPTURED -> sndTtsFlagCaptured
         }
-        if (id != 0) {
-            sp.play(id, 1f, 1f, 1, 0, 1f)
+        if (list.isNotEmpty() && textIndex < list.size) {
+            val id = list[textIndex]
+            if (id != 0) {
+                sp.play(id, 1f, 1f, 1, 0, 1f)
+            }
         }
     }
 
     /**
      * 根据观看方视角生成对决裁决文案（主屏 A 视角 / 副屏 B 视角）
      */
-    fun battleResultText(result: BattleResult, attacker: ChessPiece, viewer: Player): String {
-        val mine = attacker.owner == viewer
+    companion object {
+        val textAttackerWon = listOf(
+            "哈哈，我的子比你大，你被吃啦！", "以卵击石，不自量力！", "太弱了，不堪一击啊！", "碾压局，轻松拿下！", "哎呀，不好意思，把你吃掉了。",
+            "兄弟，看清楚军衔再撞好吗？", "大鱼吃小鱼，我吃你！", "哇哦，白给的一个子，谢谢啦！", "就这？还想跟我硬碰硬？", "实力悬殊，我赢麻了！"
+        )
+        val textDefenderWon = listOf(
+            "哎呦喂，自己撞枪口上啦？", "飞蛾扑火，自寻死路！", "防守反击，就是这么轻松！", "撞墙了吧？头破血流了吧！", "真是不长眼啊，直接送人头！",
+            "哈哈，这可是铁板一块，撞不破的！", "守株待兔，你果然上钩了！", "感谢老铁送来的棋子！", "想偷袭？没门！我比你大！", "完美防御，反杀成功！"
+        )
+        val textBothDied = listOf(
+            "卧槽，居然同归于尽了！", "啊！一起毁灭吧！", "炸弹！砰的一声，什么都没了！", "玉石俱焚，谁也别想好过！", "双双把家还，这也太惨烈了！",
+            "硬碰硬，结果大家都没了！", "旗鼓相当，一换一不亏！", "你不要过来啊！轰！同归于尽！", "这是什么神仙对决，直接双杀！", "得，这下大家都清净了。"
+        )
+        val textFlagCaptured = listOf(
+            "拔得头筹！你的军旗被我扛走啦！", "军旗倒下，游戏结束！你输了！", "哈哈，你的大本营被我端啦！", "夺旗成功！胜利属于我！", "这军旗我就笑纳了，承让承让！",
+            "大势已去，你的军旗没保住啊！", "直捣黄龙，军旗到手！", "一招毙命，摘下你的军旗！", "防守太差了吧，军旗就这么被我拿了？", "绝杀！夺取军旗，游戏通关！"
+        )
+    }
+
+    fun getBattleResultText(result: BattleResult, index: Int): String {
         return when (result) {
-            BattleResult.ATTACKER_WON -> if (mine) "一招制敌！对面这颗子被送回老家 👋" else "我方猛士壮烈牺牲，对面有点东西啊 😵"
-            BattleResult.DEFENDER_WON -> if (mine) "偷鸡不成蚀把米，白给一子 🐔" else "稳如泰山！对面自己撞上来送了 🙏"
-            BattleResult.BOTH_DIED -> "同归于尽！要走一起走，够义气 💥"
-            BattleResult.FLAG_CAPTURED -> if (mine) "直捣黄龙，军旗到手，这把赢麻了 🏆" else "老家被人端了！下次一定 😭"
+            BattleResult.ATTACKER_WON -> textAttackerWon.getOrElse(index) { textAttackerWon.first() }
+            BattleResult.DEFENDER_WON -> textDefenderWon.getOrElse(index) { textDefenderWon.first() }
+            BattleResult.BOTH_DIED -> textBothDied.getOrElse(index) { textBothDied.first() }
+            BattleResult.FLAG_CAPTURED -> textFlagCaptured.getOrElse(index) { textFlagCaptured.first() }
         }
     }
 
     /**
      * 展示高保真暗棋对决动画对话框 (2.5秒自动消散)
      */
-    private fun showBattleDialog(attacker: ChessPiece, result: BattleResult) {
+    private fun showBattleDialog(attacker: ChessPiece, resultText: String) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_battle, null)
         val tvAttacker = dialogView.findViewById<TextView>(R.id.fighter_self)
         val tvDefender = dialogView.findViewById<TextView>(R.id.fighter_enemy)
@@ -565,7 +596,7 @@ class MainActivity : AppCompatActivity() {
         tvDefender.text = "🔒"
         tvDefender.setBackgroundResource(R.drawable.piece_enemy_bg)
 
-        tvResult.text = battleResultText(result, attacker, Player.A)
+        tvResult.text = resultText
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)

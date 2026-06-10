@@ -206,7 +206,7 @@ class GamePresentation(
      * 副屏对决裁决浮层（XML 预置全屏浮层 battle_overlay，已随父布局旋转 180° 匹配 B 读屏方向，
      * 带入场动画，2.5 秒自动隐藏）
      */
-    fun showBattleDialog(attacker: ChessPiece, result: BattleResult) {
+    fun showBattleDialog(attacker: ChessPiece, resultText: String) {
         if (!::binding.isInitialized) return
 
         binding.subFighterSelf.text = attacker.type.displayName
@@ -216,7 +216,7 @@ class GamePresentation(
         )
         binding.subFighterEnemy.text = "🔒"
         binding.subFighterEnemy.setBackgroundResource(R.drawable.piece_enemy_bg)
-        binding.subBattleResultText.text = mainActivity.battleResultText(result, attacker, Player.B)
+        binding.subBattleResultText.text = resultText
 
         // 两屏逻辑 density 不同（主屏 2.0 / 副屏约 1.33），按比例放大副屏卡片使其与主屏物理等大
         val scale = mainActivity.resources.displayMetrics.density / context.resources.displayMetrics.density
