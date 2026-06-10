@@ -232,7 +232,7 @@ class BoardBackgroundView @JvmOverloads constructor(
                     val radius = Math.min(cellW, cellH) * 0.38f
                     canvas.drawCircle(center.x, center.y, radius, stationFillPaint)
                     canvas.drawCircle(center.x, center.y, radius, campPaint)
-                    canvas.drawText("行营", center.x, center.y + 10f, labelTextPaint)
+                    // canvas.drawText("行营", center.x, center.y + 10f, labelTextPaint)
                 } else if (GameEngine.isHq(pos)) {
                     // 绘制大本营：双线盾形卡框
                     canvas.drawRoundRect(rect, 12f, 12f, stationFillPaint)
@@ -240,26 +240,29 @@ class BoardBackgroundView @JvmOverloads constructor(
                     // 内层环线
                     val innerRect = RectF(left + 6f, top + 6f, right - 6f, bottom - 6f)
                     canvas.drawRoundRect(innerRect, 8f, 8f, hqPaint)
-                    canvas.drawText("大本营", center.x, center.y + 10f, labelTextPaint)
+                    // canvas.drawText("大本营", center.x, center.y + 10f, labelTextPaint)
                 } else {
                     // 绘制普通兵站：圆角矩形灰色框，底框写字
                     canvas.drawRoundRect(rect, 6f, 6f, stationFillPaint)
                     canvas.drawRoundRect(rect, 6f, 6f, stationBorderPaint)
-                    canvas.drawText("兵站", center.x, center.y + 10f, labelTextPaint)
+                    // canvas.drawText("兵站", center.x, center.y + 10f, labelTextPaint)
                 }
             }
         }
 
         // 6. 绘制山界圆圈（Col 1 与 Col 3 处山岭阻断，不可通行，对应标准棋盘的两个"山界"）
+        /*
         val mountainR = Math.min(cellW, cellH) * 0.36f
         for (c in listOf(1, 3)) {
             val cx = c * cellW + cellW / 2f
             canvas.drawCircle(cx, riverY, mountainR, mountainFillPaint)
             canvas.drawCircle(cx, riverY, mountainR, mountainStrokePaint)
-            canvas.drawText("山界", cx, riverY + 9f, riverTextPaint)
+            // canvas.drawText("山界", cx, riverY + 9f, riverTextPaint)
         }
+        */
 
         // 7. 在界河的 Col 0, Col 2, Col 4 处绘制三个“前线”特殊格子
+        /*
         val frontW = cellW * 0.88f
         val frontH = cellH * 0.65f
         for (c in listOf(0, 2, 4)) {
@@ -275,8 +278,9 @@ class BoardBackgroundView @JvmOverloads constructor(
             canvas.drawRect(fRect, railBasePaint)
             canvas.drawRoundRect(fRect, 6f, 6f, stationFillPaint)
             canvas.drawRoundRect(fRect, 6f, 6f, roadPaint)
-            canvas.drawText("前线", frontX, riverY + 10f, labelTextPaint)
+            // canvas.drawText("前线", frontX, riverY + 10f, labelTextPaint)
         }
+        */
 
         // 8. 棋盘霓虹圆角外框（按视角主题色淡淡描边收束整体）
         frameGlowPaint.color = (themeColor and 0x00FFFFFF) or 0x59000000

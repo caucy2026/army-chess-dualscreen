@@ -1,4 +1,4 @@
-﻿# CLAUDE.md
+# CLAUDE.md
 
 ## 📌 项目概述
 本项目为通用便签本与草稿工作区（Pad），主要面向**双屏 Android 平板应用开发**（详细设备硬件与屏幕配置参考 [device_info.md](file:///E:/pad/device_info.md)），同时也用于临时代码编写、小工具实验及测试。
@@ -41,6 +41,7 @@
 
 12. **双边确认重置**：单边点击「重置」只发起请求（`MainActivity.requestReset(player)`，`resetRequests` 集合记录），A/B 双方都点击后 `resetGame()` 才真正执行；期间双屏按各自视角提示"已发起/对方请求"。任一方继续走子即清空未完成的请求（防止陈旧请求导致意外重置）。无副屏调试模式（`gamePresentation == null`）下单边直接重置。
 13. **对弈阶段规则速查面板**：布阵完成进入 PLAYING/FINISHED 后，左侧面板的待部署托盘（`tv_tray_label` + `rv_piece_tray`）隐藏，改为显示可滚动的游戏规则速查 `sv_rules`（文案在 strings.xml `game_rules_text`，内容须与 GameEngine 实际规则一致），主副屏同构。
+14. **玩家控制面板“三明治”风景框方案**：左侧玩家控制面板（包括规则和待部署托盘区域）采用了三层结构以实现高质感：底层为原版的 `glass_panel_bg` 提供立体投影和高光边框支持；中层为 `CardView`，通过强制取消留白（`app:cardPreventCornerOverlap="false"` 和 `app:cardUseCompatPadding="false"`）精准裁出 16dp 圆角，内部放置无缝裁切（`centerCrop`）的清新风景图以及一层 65% 透明度（`#A6FFFFFF`）的白色蒙版以提升文字清晰度和磨砂感；顶层再覆盖一层 `glass_stroke.xml` 以强调边框质感。同时，规则显示逻辑已修改，任意一方完成布阵后立刻切换显示规则面板，不再等待双方同时就绪。
 
 ## ✍️ 开发规范与约定
 为了保持代码整洁和协作顺畅，请遵循以下规范：

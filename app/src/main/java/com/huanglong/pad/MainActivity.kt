@@ -796,7 +796,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 2. 刷新主屏待部署棋子托盘 (对弈/结束阶段改为显示游戏规则速查)
-        if (gameStage == GameStage.LAYOUT) {
+        if (gameStage == GameStage.LAYOUT && !isReadyA) {
             binding.tvTrayLabel.visibility = View.VISIBLE
             binding.rvPieceTray.visibility = View.VISIBLE
             binding.svRules.visibility = View.GONE

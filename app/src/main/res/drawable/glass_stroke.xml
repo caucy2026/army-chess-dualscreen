@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 覆盖在带圆角的风景图片上方的玻璃边框，让图片真正融入 UI 框内 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <!-- 透明填充 -->
+            <solid android:color="#00000000" />
+            <corners android:radius="16dp" />
+            <!-- 玻璃高光描边 -->
+            <stroke android:width="1.5dp" android:color="#D9FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

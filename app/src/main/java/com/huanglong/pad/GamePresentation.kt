@@ -138,7 +138,7 @@ class GamePresentation(
         }
 
         // 2. 刷新待部署托盘 (对弈/结束阶段改为显示游戏规则速查)
-        if (stage == MainActivity.GameStage.LAYOUT) {
+        if (stage == MainActivity.GameStage.LAYOUT && !mainActivity.isReadyB) {
             binding.tvTrayLabel.visibility = View.VISIBLE
             binding.rvPieceTray.visibility = View.VISIBLE
             binding.svRules.visibility = View.GONE
