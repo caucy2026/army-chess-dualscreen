@@ -695,8 +695,8 @@ class MainActivity : AppCompatActivity() {
         
         // 乌龟阵 (重防守)
         val turtle = listOf(
-            PLATOON, COMPANY, BATTALION, PLATOON, COMPANY,
-            COMMANDER, REGIMENT, BRIGADE, ENGINEER, PLATOON,
+            PLATOON, COMPANY, ENGINEER, PLATOON, COMPANY,
+            COMMANDER, REGIMENT, BRIGADE, BATTALION, PLATOON,
             BOMB,    DIVISION, BATTALION,
             REGIMENT, CORPS, BRIGADE, BOMB,
             DIVISION, LANDMINE, LANDMINE,
@@ -706,8 +706,8 @@ class MainActivity : AppCompatActivity() {
         
         // 飞花阵 (重进攻) - 司令居中，第一排无军长师长
         val blitz = listOf(
-            REGIMENT, PLATOON, COMMANDER, PLATOON, REGIMENT,
-            BRIGADE, COMPANY, DIVISION, COMPANY, BRIGADE,
+            COMPANY, PLATOON, COMMANDER, PLATOON, COMPANY,
+            BRIGADE, REGIMENT, DIVISION, REGIMENT, BRIGADE,
             BOMB, DIVISION, BOMB,
             BATTALION, CORPS, BATTALION, COMPANY,
             ENGINEER, LANDMINE, LANDMINE,
@@ -717,8 +717,8 @@ class MainActivity : AppCompatActivity() {
         
         // 均衡阵 (攻守兼备) - 司令在第一排两边，第一排无军长师长
         val balance = listOf(
-            COMMANDER, COMPANY, BRIGADE, PLATOON, REGIMENT,
-            DIVISION, PLATOON, BATTALION, ENGINEER, COMPANY,
+            COMMANDER, COMPANY, ENGINEER, PLATOON, COMPANY,
+            DIVISION, PLATOON, BATTALION, BRIGADE, REGIMENT,
             BOMB, CORPS, COMPANY,
             BRIGADE, REGIMENT, DIVISION, BOMB,
             BATTALION, LANDMINE, LANDMINE,
