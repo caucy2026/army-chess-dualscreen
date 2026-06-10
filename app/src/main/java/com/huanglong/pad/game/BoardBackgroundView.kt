@@ -212,8 +212,9 @@ class BoardBackgroundView @JvmOverloads constructor(
         }
 
         // 5. 绘制 60 个棋盘网格单元的外框（兵站、大本营、行营底色）
-        val rectW = cellW * 0.84f
-        val rectH = cellH * 0.72f
+        // 注意：框体必须小于棋子实体（棋子约占 0.85*cellW x 0.64*cellH），落子后框不外露
+        val rectW = cellW * 0.78f
+        val rectH = cellH * 0.56f
 
         for (r in 0 until GameEngine.ROWS) {
             for (c in 0 until GameEngine.COLS) {
@@ -229,7 +230,7 @@ class BoardBackgroundView @JvmOverloads constructor(
 
                 if (GameEngine.isCamp(pos)) {
                     // 绘制行营：虚线圆圈，底色浅黑
-                    val radius = Math.min(cellW, cellH) * 0.38f
+                    val radius = Math.min(cellW, cellH) * 0.30f
                     canvas.drawCircle(center.x, center.y, radius, stationFillPaint)
                     canvas.drawCircle(center.x, center.y, radius, campPaint)
                     // canvas.drawText("行营", center.x, center.y + 10f, labelTextPaint)
