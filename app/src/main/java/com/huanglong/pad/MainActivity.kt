@@ -704,21 +704,21 @@ class MainActivity : AppCompatActivity() {
         )
         formations.add(Pair("乌龟阵 (重防)", turtle))
         
-        // 飞花阵 (重进攻)
+        // 飞花阵 (重进攻) - 司令居中，第一排无军长师长
         val blitz = listOf(
-            CORPS, PLATOON, COMMANDER, PLATOON, DIVISION,
+            REGIMENT, PLATOON, COMMANDER, PLATOON, REGIMENT,
             BRIGADE, COMPANY, DIVISION, COMPANY, BRIGADE,
-            BOMB, REGIMENT, BOMB,
-            BATTALION, REGIMENT, BATTALION, COMPANY,
+            BOMB, DIVISION, BOMB,
+            BATTALION, CORPS, BATTALION, COMPANY,
             ENGINEER, LANDMINE, LANDMINE,
             ENGINEER, FLAG, LANDMINE, PLATOON, ENGINEER
         )
         formations.add(Pair("飞花阵 (重攻)", blitz))
         
-        // 均衡阵 (攻守兼备)
+        // 均衡阵 (攻守兼备) - 司令在第一排两边，第一排无军长师长
         val balance = listOf(
-            DIVISION, COMPANY, BRIGADE, PLATOON, REGIMENT,
-            BATTALION, PLATOON, COMMANDER, ENGINEER, COMPANY,
+            COMMANDER, COMPANY, BRIGADE, PLATOON, REGIMENT,
+            DIVISION, PLATOON, BATTALION, ENGINEER, COMPANY,
             BOMB, CORPS, COMPANY,
             BRIGADE, REGIMENT, DIVISION, BOMB,
             BATTALION, LANDMINE, LANDMINE,
