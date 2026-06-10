@@ -7,6 +7,7 @@ import android.hardware.display.DisplayManager
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.Display
 import android.view.LayoutInflater
@@ -80,6 +81,9 @@ class MainActivity : AppCompatActivity() {
     private val sndTtsBothDied = mutableListOf<Int>()
     private val sndTtsFlagCaptured = mutableListOf<Int>()
 
+    // 保存进入应用前的自动旋转状态
+    private var originalRotationState: Int = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -101,6 +105,18 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // 关闭系统自动旋转
+        try {
+            if (Settings.System.canWrite(this)) {
+                originalRotationState = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, -1)
+                if (originalRotationState != 0) {
+                    Settings.System.putInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
         // 配置主屏棋盘背景为玩家 A (冰蓝) 视角
         binding.boardBackgroundView.perspective = Player.A
@@ -131,6 +147,17 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         soundPool?.release()
         soundPool = null
+
+        // 还原系统自动旋转状态
+        if (originalRotationState != -1) {
+            try {
+                if (Settings.System.canWrite(this)) {
+                    Settings.System.putInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, originalRotationState)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     /**
@@ -477,8 +504,8 @@ class MainActivity : AppCompatActivity() {
             val textIndex = (0..9).random()
             val resultText = getBattleResultText(result, textIndex)
             
-            showBattleDialog(attacker, resultText)
-            gamePresentation?.showBattleDialog(attacker, resultText)
+            showBattleDialog(attacker, defender, resultText)
+            gamePresentation?.showBattleDialog(attacker, defender, resultText)
 
             // 语音播报：谁主动出击就播放谁那边的本地预置搞笑音频（0延迟）
             playTtsVoice(result, textIndex)
@@ -611,20 +638,31 @@ class MainActivity : AppCompatActivity() {
     /**
      * 展示高保真暗棋对决动画对话框 (2.5秒自动消散)
      */
-    private fun showBattleDialog(attacker: ChessPiece, resultText: String) {
+    private fun showBattleDialog(attacker: ChessPiece, defender: ChessPiece, resultText: String) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_battle, null)
         val tvAttacker = dialogView.findViewById<TextView>(R.id.fighter_self)
         val tvDefender = dialogView.findViewById<TextView>(R.id.fighter_enemy)
         val tvResult = dialogView.findViewById<TextView>(R.id.battle_result_text)
 
         // 渲染攻方（碰子瞬间亮明攻方身份）
-        tvAttacker.text = attacker.type.displayName
-        tvAttacker.setTextColor(ContextCompat.getColor(this, R.color.white))
-        tvAttacker.setBackgroundResource(if (attacker.owner == Player.A) R.drawable.piece_a_bg else R.drawable.piece_b_bg)
+        if (attacker.owner == Player.A) {
+            tvAttacker.text = attacker.type.displayName
+            tvAttacker.setTextColor(ContextCompat.getColor(this, R.color.white))
+            tvAttacker.setBackgroundResource(R.drawable.piece_a_bg)
+        } else {
+            tvAttacker.text = ""
+            tvAttacker.setBackgroundResource(R.drawable.piece_enemy_bg)
+        }
 
         // 渲染防守方：暗棋裁决不公开身份，仅显示锁 🔒
-        tvDefender.text = ""
-        tvDefender.setBackgroundResource(R.drawable.piece_enemy_bg)
+        if (defender.owner == Player.A) {
+            tvDefender.text = defender.type.displayName
+            tvDefender.setTextColor(ContextCompat.getColor(this, R.color.white))
+            tvDefender.setBackgroundResource(R.drawable.piece_a_bg)
+        } else {
+            tvDefender.text = ""
+            tvDefender.setBackgroundResource(R.drawable.piece_enemy_bg)
+        }
 
         tvResult.text = resultText
 
@@ -942,26 +980,19 @@ class MainActivity : AppCompatActivity() {
      * 按触发方路由提示：B 在副屏操作触发的提示显示到副屏提示条
      * （Android Toast 只会显示在主屏，Presentation 副屏无法显示 Toast）
      */
+    private var tipHideRunnable: Runnable? = null
+
     fun showToast(msg: String, target: Player = Player.A) {
         if (target == Player.B && gamePresentation != null) {
             gamePresentation?.showTip(msg)
             return
         }
-        val toast = Toast(this)
-        val tv = android.widget.TextView(this)
-        tv.text = msg
-        tv.setTextColor(android.graphics.Color.WHITE)
-        tv.setPadding(40, 20, 40, 20)
-        tv.textSize = 18f
-        val shape = android.graphics.drawable.GradientDrawable()
-        shape.setColor(android.graphics.Color.parseColor("#CC000000"))
-        shape.cornerRadius = 16f
-        tv.background = shape
-        toast.view = tv
-        toast.duration = Toast.LENGTH_SHORT
-        // 设置在顶部，避免遮挡底部棋盘棋子
-        toast.setGravity(android.view.Gravity.TOP, 0, 150)
-        toast.show()
+        binding.tvTip.text = msg
+        binding.tvTip.visibility = View.VISIBLE
+        tipHideRunnable?.let { binding.tvTip.removeCallbacks(it) }
+        val hide = Runnable { binding.tvTip.visibility = View.GONE }
+        tipHideRunnable = hide
+        binding.tvTip.postDelayed(hide, 2000)
     }
 
 }

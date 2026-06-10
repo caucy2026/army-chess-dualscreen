@@ -226,16 +226,28 @@ class GamePresentation(
      * 副屏对决裁决浮层（XML 预置全屏浮层 battle_overlay，已随父布局旋转 180° 匹配 B 读屏方向，
      * 带入场动画，2.5 秒自动隐藏）
      */
-    fun showBattleDialog(attacker: ChessPiece, resultText: String) {
+    fun showBattleDialog(attacker: ChessPiece, defender: ChessPiece, resultText: String) {
         if (!::binding.isInitialized) return
 
-        binding.subFighterSelf.text = attacker.type.displayName
-        binding.subFighterSelf.setTextColor(ContextCompat.getColor(context, R.color.white))
-        binding.subFighterSelf.setBackgroundResource(
-            if (attacker.owner == Player.A) R.drawable.piece_a_bg else R.drawable.piece_b_bg
-        )
-        binding.subFighterEnemy.text = ""
-        binding.subFighterEnemy.setBackgroundResource(R.drawable.piece_enemy_bg)
+        // 渲染攻方（如果攻方是副屏玩家 B 则亮明，否则保密）
+        if (attacker.owner == Player.B) {
+            binding.subFighterSelf.text = attacker.type.displayName
+            binding.subFighterSelf.setTextColor(ContextCompat.getColor(context, R.color.white))
+            binding.subFighterSelf.setBackgroundResource(R.drawable.piece_b_bg)
+        } else {
+            binding.subFighterSelf.text = ""
+            binding.subFighterSelf.setBackgroundResource(R.drawable.piece_enemy_bg)
+        }
+
+        // 渲染防守方（如果防守方是副屏玩家 B 则亮明，否则保密）
+        if (defender.owner == Player.B) {
+            binding.subFighterEnemy.text = defender.type.displayName
+            binding.subFighterEnemy.setTextColor(ContextCompat.getColor(context, R.color.white))
+            binding.subFighterEnemy.setBackgroundResource(R.drawable.piece_b_bg)
+        } else {
+            binding.subFighterEnemy.text = ""
+            binding.subFighterEnemy.setBackgroundResource(R.drawable.piece_enemy_bg)
+        }
         binding.subBattleResultText.text = resultText
 
         // 两屏逻辑 density 不同（主屏 2.0 / 副屏约 1.33），按比例放大副屏卡片使其与主屏物理等大

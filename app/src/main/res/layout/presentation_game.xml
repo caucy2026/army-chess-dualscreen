@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:rotation="180">
+        >
 
         <!-- 左侧：控制面板与棋子托盘 (针对玩家 B)。
              注意：根布局 rotation=180° 与 B 背靠背观看双重翻转相互抵消，
@@ -229,7 +229,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="75dp"
-        android:rotation="180"
+        
         android:background="@drawable/tip_toast_bg"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
@@ -247,7 +247,7 @@
         android:layout_height="match_parent"
         android:background="#B3000000"
         android:clickable="true"
-        android:rotation="180"
+        
         android:visibility="gone">
 
         <LinearLayout
