@@ -696,11 +696,11 @@ class MainActivity : AppCompatActivity() {
         // 乌龟阵 (重防守)
         val turtle = listOf(
             PLATOON, COMPANY, BATTALION, PLATOON, COMPANY,
-            COMPANY, REGIMENT, BRIGADE, ENGINEER, PLATOON,
+            COMMANDER, REGIMENT, BRIGADE, ENGINEER, PLATOON,
             BOMB,    DIVISION, BATTALION,
             REGIMENT, CORPS, BRIGADE, BOMB,
             DIVISION, LANDMINE, LANDMINE,
-            ENGINEER, COMMANDER, LANDMINE, FLAG, ENGINEER
+            ENGINEER, COMPANY, LANDMINE, FLAG, ENGINEER
         )
         formations.add(Pair("乌龟阵 (重防)", turtle))
         
