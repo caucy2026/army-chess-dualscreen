@@ -605,6 +605,12 @@ class MainActivity : AppCompatActivity() {
 
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
+        
+        dialog.window?.let { window ->
+            val width = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 320f, resources.displayMetrics).toInt()
+            window.setLayout(width, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        
         BattleAnim.play(dialogView, tvAttacker, tvDefender)
 
         // 2.5秒后自动消失
