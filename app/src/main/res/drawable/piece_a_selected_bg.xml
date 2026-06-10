@@ -24,7 +24,7 @@
     <item android:top="4.5dp" android:left="4.5dp" android:right="4.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="6dp"/>
-            <gradient android:startColor="#67E8F9" android:centerColor="#00E5FF" android:endColor="#0891B2" android:angle="270"/>
+            <gradient android:startColor="#0891B2" android:centerColor="#67E8F9" android:endColor="#0E7490" android:angle="315"/>
         </shape>
     </item>
     <!-- 顶部玻璃高光 -->

@@ -27,11 +27,11 @@
             <gradient android:startColor="#BFDBFE" android:centerColor="#60A5FA" android:endColor="#1D4ED8" android:angle="270"/>
         </shape>
     </item>
-    <!-- 珐琅主体（三段渐变） -->
+    <!-- 珐琅主体（斜向流光：暗→亮带→暗） -->
     <item android:top="4.2dp" android:left="4.2dp" android:right="4.2dp" android:bottom="6.7dp">
         <shape android:shape="rectangle">
             <corners android:radius="6dp"/>
-            <gradient android:startColor="#3B82F6" android:centerColor="#2563EB" android:endColor="#1E3A8A" android:angle="270"/>
+            <gradient android:startColor="#1D4ED8" android:centerColor="#5B9BFD" android:endColor="#1E3A8A" android:angle="315"/>
         </shape>
     </item>
     <!-- 顶部玻璃高光 -->
