@@ -677,6 +677,58 @@ class MainActivity : AppCompatActivity() {
         refreshUI()
     }
 
+    private fun getClassicFormations(): List<Pair<String, List<PieceType>>> {
+        val PLATOON = PieceType.PLATOON_COMMANDER
+        val COMPANY = PieceType.COMPANY_COMMANDER
+        val BATTALION = PieceType.BATTALION_COMMANDER
+        val REGIMENT = PieceType.REGIMENT_COMMANDER
+        val BRIGADE = PieceType.BRIGADE_COMMANDER
+        val DIVISION = PieceType.DIVISION_COMMANDER
+        val CORPS = PieceType.CORPS_COMMANDER
+        val COMMANDER = PieceType.COMMANDER
+        val ENGINEER = PieceType.ENGINEER
+        val BOMB = PieceType.BOMB
+        val LANDMINE = PieceType.LANDMINE
+        val FLAG = PieceType.FLAG
+
+        val formations = mutableListOf<Pair<String, List<PieceType>>>()
+        
+        // 乌龟阵 (重防守)
+        val turtle = listOf(
+            PLATOON, COMPANY, BATTALION, PLATOON, COMPANY,
+            COMPANY, REGIMENT, BRIGADE, ENGINEER, PLATOON,
+            BOMB,    DIVISION, BATTALION,
+            REGIMENT, CORPS, BRIGADE, BOMB,
+            DIVISION, LANDMINE, LANDMINE,
+            ENGINEER, COMMANDER, LANDMINE, FLAG, ENGINEER
+        )
+        formations.add(Pair("乌龟阵 (重防)", turtle))
+        
+        // 飞花阵 (重进攻)
+        val blitz = listOf(
+            COMMANDER, PLATOON, CORPS, PLATOON, DIVISION,
+            BRIGADE, COMPANY, DIVISION, COMPANY, BRIGADE,
+            BOMB, REGIMENT, BOMB,
+            BATTALION, REGIMENT, BATTALION, COMPANY,
+            ENGINEER, LANDMINE, LANDMINE,
+            ENGINEER, FLAG, LANDMINE, PLATOON, ENGINEER
+        )
+        formations.add(Pair("飞花阵 (重攻)", blitz))
+        
+        // 均衡阵 (攻守兼备)
+        val balance = listOf(
+            DIVISION, COMPANY, BRIGADE, PLATOON, REGIMENT,
+            BATTALION, PLATOON, COMMANDER, ENGINEER, COMPANY,
+            BOMB, CORPS, COMPANY,
+            BRIGADE, REGIMENT, DIVISION, BOMB,
+            BATTALION, LANDMINE, LANDMINE,
+            ENGINEER, PLATOON, LANDMINE, FLAG, ENGINEER
+        )
+        formations.add(Pair("均衡阵 (攻守兼备)", balance))
+
+        return formations
+    }
+
     /**
      * 一键布防 (Auto Layout) 合法配置
      */
@@ -697,76 +749,54 @@ class MainActivity : AppCompatActivity() {
 
         // 2. 划分所有待部署的 25 个物理格
         val availablePositions = ArrayList<Position>()
-        val startRow = if (player == Player.A) 6 else 0
-        val endRow = if (player == Player.A) 11 else 5
-
-        for (r in startRow..endRow) {
-            for (c in 0 until GameEngine.COLS) {
-                val pos = Position(r, c)
-                if (!GameEngine.isCamp(pos)) {
-                    availablePositions.add(pos)
+        if (player == Player.A) {
+            for (r in 6..11) { // 6 是前锋界河边，11 是底线
+                for (c in 0 until GameEngine.COLS) {
+                    val pos = Position(r, c)
+                    if (!GameEngine.isCamp(pos)) availablePositions.add(pos)
+                }
+            }
+        } else {
+            for (r in 5 downTo 0) { // 5 是前锋界河边，0 是底线
+                for (c in 0 until GameEngine.COLS) {
+                    val pos = Position(r, c)
+                    if (!GameEngine.isCamp(pos)) availablePositions.add(pos)
                 }
             }
         }
 
-        // 3. 开始按照规则一键布兵
-        // (1) 军旗必须放在两个大本营之一
-        val hqs = if (player == Player.A) {
-            listOf(Position(11, 1), Position(11, 3))
-        } else {
-            listOf(Position(0, 1), Position(0, 3))
-        }
-        val flagPos = hqs.random()
-        val flagPiece = myPieces.first { it.type == PieceType.FLAG }
-        piecesMap[flagPos] = flagPiece
-        availablePositions.remove(flagPos)
-        myPieces.remove(flagPiece)
+        // 3. 获取阵法并部署
+        val classicFormations = getClassicFormations()
+        val chosen = classicFormations.random()
+        val formationName = chosen.first
+        var typesLayout = chosen.second
 
-        // (2) 另一个大本营随机放一个普通强子 (除了地雷、炸弹和军旗之外的子)
-        val otherHq = hqs.first { it != flagPos }
-        val strongPiece = myPieces.first { it.type != PieceType.LANDMINE && it.type != PieceType.BOMB }
-        piecesMap[otherHq] = strongPiece
-        availablePositions.remove(otherHq)
-        myPieces.remove(strongPiece)
-
-        // (3) 地雷必须在最后两排
-        val minePositions = availablePositions.filter {
-            if (player == Player.A) it.row in 10..11 else it.row in 0..1
-        }.shuffled().take(3)
-        
-        val minePieces = myPieces.filter { it.type == PieceType.LANDMINE }
-        for (i in 0 until 3) {
-            piecesMap[minePositions[i]] = minePieces[i]
-            availablePositions.remove(minePositions[i])
-            myPieces.remove(minePieces[i])
+        // 50% 概率左右镜像翻转
+        if (Math.random() > 0.5) {
+            val row0 = typesLayout.subList(0, 5).reversed()
+            val row1 = typesLayout.subList(5, 10).reversed()
+            val row2 = typesLayout.subList(10, 13).reversed()
+            val row3 = typesLayout.subList(13, 17).reversed()
+            val row4 = typesLayout.subList(17, 20).reversed()
+            val row5 = typesLayout.subList(20, 25).reversed()
+            typesLayout = row0 + row1 + row2 + row3 + row4 + row5
         }
 
-        // (4) 炸弹不能在最前两排
-        val bombPositions = availablePositions.filter {
-            if (player == Player.A) it.row !in 6..7 else it.row !in 4..5
-        }.shuffled().take(2)
-        val bombPieces = myPieces.filter { it.type == PieceType.BOMB }
-        for (i in 0 until 2) {
-            piecesMap[bombPositions[i]] = bombPieces[i]
-            availablePositions.remove(bombPositions[i])
-            myPieces.remove(bombPieces[i])
+        // 4. 将预设的棋子类型与玩家托盘中的真实棋子实例匹配填充
+        for (i in 0 until 25) {
+            val type = typesLayout[i]
+            val piece = myPieces.first { it.type == type }
+            piecesMap[availablePositions[i]] = piece
+            myPieces.remove(piece)
         }
 
-        // (5) 剩余 18 个棋子随机乱序塞入剩余空位置即可
-        myPieces.shuffle()
-        for (pos in availablePositions.toList()) {
-            if (myPieces.isNotEmpty()) {
-                val p = myPieces.removeAt(0)
-                piecesMap[pos] = p
-            }
-        }
-
-        // 4. 将布局同步到全局 BoardState
+        // 5. 将布局同步到全局 BoardState
         boardState.putAll(piecesMap)
         if (player == Player.A) trayPiecesA.clear() else trayPiecesB.clear()
 
         refreshUI()
-        showToast("${if (player == Player.A) "玩家 A" else "玩家 B"} 自动部署就绪", player)
+        val playerStr = if (player == Player.A) "玩家 A" else "玩家 B"
+        showToast("$playerStr 启用阵法：$formationName", player)
     }
 
     /**
