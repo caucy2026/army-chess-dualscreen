@@ -257,8 +257,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         val requesterName = if (requester == Player.A) "玩家 A" else "玩家 B"
-        val tipForRequester = "已发起重置请求，等待对方点击「重置」确认"
-        val tipForOther = "$requesterName 请求重置棋局，点击「重置」即同意"
+        val tipForRequester = "已发起重新开始请求，等待对方点击「重新开始」确认"
+        val tipForOther = "$requesterName 请求重新开始棋局，点击「重新开始」即同意"
         showToast(if (requester == Player.A) tipForRequester else tipForOther, Player.A)
         gamePresentation?.showTip(if (requester == Player.B) tipForRequester else tipForOther)
     }
@@ -271,8 +271,8 @@ class MainActivity : AppCompatActivity() {
         initGameData()
         refreshUI()
         // 全局消息：双屏同时提示（重置可能由任一方触发）
-        showToast("游戏已重置，请重新布兵")
-        gamePresentation?.showTip("游戏已重置，请重新布兵")
+        showToast("游戏已重新开始，请重新布兵")
+        gamePresentation?.showTip("游戏已重新开始，请重新布兵")
     }
 
     /**
