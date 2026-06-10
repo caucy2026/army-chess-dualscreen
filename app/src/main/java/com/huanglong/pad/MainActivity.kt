@@ -68,6 +68,9 @@ class MainActivity : AppCompatActivity() {
 
     // 双边确认重置：已发起重置请求的玩家集合，A/B 都点击重置后才真正重置
     private val resetRequests = HashSet<Player>()
+    private var isAnimating = false
+    var lastMoveFrom: Position? = null
+    var lastMoveTo: Position? = null
 
     // 对决音效播放器 (SoundPool + res/raw 音频)
     private var soundPool: SoundPool? = null
@@ -320,6 +323,7 @@ class MainActivity : AppCompatActivity() {
      * 点击棋盘某个格子的核心处理逻辑
      */
     fun onCellClicked(pos: Position, clicker: Player) {
+        if (isAnimating) return
         if (gameStage == GameStage.LAYOUT) {
             handleLayoutClick(pos, clicker)
         } else if (gameStage == GameStage.PLAYING) {
@@ -410,6 +414,39 @@ class MainActivity : AppCompatActivity() {
     /**
      * 2. 阶段：行军及碰撞交互处理
      */
+    fun playMoveAnimation(from: Position, to: Position, onComplete: () -> Unit) {
+        val sourceCell = cells[from] as? android.view.ViewGroup
+        val targetCell = cells[to]
+        if (sourceCell == null || targetCell == null) {
+            onComplete()
+            return
+        }
+        val tvSource = sourceCell.findViewById<android.widget.TextView>(R.id.tv_piece_text)
+        
+        binding.boardGridLayout.clipChildren = false
+        sourceCell.clipChildren = false
+        sourceCell.bringToFront()
+        
+        val dx = targetCell.x - sourceCell.x
+        val dy = targetCell.y - sourceCell.y
+        
+        tvSource.animate()
+            .translationX(dx)
+            .translationY(dy)
+            .setDuration(400)
+            .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+            .withEndAction {
+                tvSource.translationX = 0f
+                tvSource.translationY = 0f
+                binding.boardGridLayout.clipChildren = true
+                sourceCell.clipChildren = true
+                lastMoveFrom = from
+                lastMoveTo = to
+                onComplete()
+            }
+            .start()
+    }
+
     private fun handlePlayingClick(pos: Position, clicker: Player) {
         if (currentTurn != clicker) {
             showToast("不是您的回合！", clicker)
@@ -444,24 +481,34 @@ class MainActivity : AppCompatActivity() {
         } else {
             // 点击目标点，开始移动或攻击
             if (highlightedTargets.contains(pos)) {
-                // 执行动作
-                moveOrAttack(selectedCell, pos)
-
-                // 继续走子视为放弃此前单方发起的重置请求
-                resetRequests.clear()
-
-                // 清理选择和高亮
-                clearActions()
-
-                // 转换回合
-                currentTurn = if (currentTurn == Player.A) Player.B else Player.A
-
-                // 标准规则：轮到的一方若无任何合法走法，则判负
-                if (gameStage == GameStage.PLAYING &&
-                    !GameEngine.hasAnyValidMove(boardState, currentTurn)) {
-                    gameStage = GameStage.FINISHED
-                    winner = if (currentTurn == Player.A) Player.B else Player.A
-                    winReason = "${if (currentTurn == Player.A) "玩家 A" else "玩家 B"} 无棋可走"
+                val sc = selectedCell
+                if (sc != null) {
+                    isAnimating = true
+                    gamePresentation?.playMoveAnimation(sc, pos)
+                    playMoveAnimation(sc, pos) {
+                        isAnimating = false
+                        // 执行动作
+                        moveOrAttack(sc, pos)
+        
+                        // 继续走子视为放弃此前单方发起的重置请求
+                        resetRequests.clear()
+        
+                        // 清理选择和高亮
+                        clearActions()
+        
+                        // 转换回合
+                        currentTurn = if (currentTurn == Player.A) Player.B else Player.A
+        
+                        // 标准规则：轮到的一方若无任何合法走法，则判负
+                        if (gameStage == GameStage.PLAYING &&
+                            !GameEngine.hasAnyValidMove(boardState, currentTurn)) {
+                            gameStage = GameStage.FINISHED
+                            winner = if (currentTurn == Player.A) Player.B else Player.A
+                            winReason = "${if (currentTurn == Player.A) "玩家 A" else "玩家 B"} 无棋可走"
+                        }
+                        refreshUI()
+                    }
+                    return
                 }
             } else {
                 // 取消选择或者更换选中子
@@ -887,6 +934,14 @@ class MainActivity : AppCompatActivity() {
                 vHighlight.background?.setTint(ContextCompat.getColor(this, R.color.color_a))
             } else {
                 vHighlight.visibility = View.GONE
+            }
+
+            // 渲染最后一步高亮
+            val vLastMove = cellView.findViewById<View>(R.id.v_last_move_highlight)
+            if (pos == lastMoveFrom || pos == lastMoveTo) {
+                vLastMove.visibility = View.VISIBLE
+            } else {
+                vLastMove.visibility = View.GONE
             }
 
             // 渲染棋子实体

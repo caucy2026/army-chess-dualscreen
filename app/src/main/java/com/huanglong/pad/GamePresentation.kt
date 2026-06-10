@@ -103,6 +103,34 @@ class GamePresentation(
         }
     }
 
+    fun playMoveAnimation(from: Position, to: Position) {
+        val sourceCell = cells[from] as? android.view.ViewGroup
+        val targetCell = cells[to]
+        if (sourceCell == null || targetCell == null) return
+        
+        val tvSource = sourceCell.findViewById<android.widget.TextView>(R.id.tv_piece_text)
+        
+        binding.boardGridLayout.clipChildren = false
+        sourceCell.clipChildren = false
+        sourceCell.bringToFront()
+        
+        val dx = targetCell.x - sourceCell.x
+        val dy = targetCell.y - sourceCell.y
+        
+        tvSource.animate()
+            .translationX(dx)
+            .translationY(dy)
+            .setDuration(400)
+            .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+            .withEndAction {
+                tvSource.translationX = 0f
+                tvSource.translationY = 0f
+                binding.boardGridLayout.clipChildren = true
+                sourceCell.clipChildren = true
+            }
+            .start()
+    }
+
     /**
      * 刷新界面 (由 MainActivity 在状态变更时主动调用)
      */
@@ -165,6 +193,14 @@ class GamePresentation(
                 vHighlight.background?.setTint(ContextCompat.getColor(context, R.color.color_b))
             } else {
                 vHighlight.visibility = View.GONE
+            }
+
+            // 渲染最后一步高亮
+            val vLastMove = cellView.findViewById<android.view.View>(R.id.v_last_move_highlight)
+            if (pos == mainActivity.lastMoveFrom || pos == mainActivity.lastMoveTo) {
+                vLastMove.visibility = View.VISIBLE
+            } else {
+                vLastMove.visibility = View.GONE
             }
 
             // 渲染棋子

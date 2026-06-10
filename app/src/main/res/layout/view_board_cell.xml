@@ -4,6 +4,14 @@
     android:layout_height="match_parent"
     android:padding="2dp">
 
+    <!-- 上一步的移动高亮框 -->
+    <View
+        android:id="@+id/v_last_move_highlight"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/last_move_bg"
+        android:visibility="gone" />
+
     <!-- 行军路径高亮指示圆点 -->
     <View
         android:id="@+id/v_cell_highlight"
@@ -13,7 +21,7 @@
         android:background="@drawable/cell_highlight_dot"
         android:visibility="gone" />
 
-    <!-- 棋子实体文本框 (四周留白，露出底层铁路/公路路线) -->
+    <!-- 棋子实体文本框(四周留白，露出底层铁路公路路线) -->
     <TextView
         android:id="@+id/tv_piece_text"
         android:layout_width="match_parent"
