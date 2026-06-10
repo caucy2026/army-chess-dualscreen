@@ -706,7 +706,7 @@ class MainActivity : AppCompatActivity() {
         
         // 飞花阵 (重进攻)
         val blitz = listOf(
-            COMMANDER, PLATOON, CORPS, PLATOON, DIVISION,
+            CORPS, PLATOON, COMMANDER, PLATOON, DIVISION,
             BRIGADE, COMPANY, DIVISION, COMPANY, BRIGADE,
             BOMB, REGIMENT, BOMB,
             BATTALION, REGIMENT, BATTALION, COMPANY,
