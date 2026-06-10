@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 高级沙盘窗口背景：对角暖色渐变垫底 + 顶部径向柔光模拟光源 + 底部轻暗角收束景深 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 1. 对角暖灰渐变底色 (左上亮 → 右下沉) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:startColor="#F8F6F1"
+                android:centerColor="#E8E6E1"
+                android:endColor="#D5D1C8" />
+        </shape>
+    </item>
+
+    <!-- 2. 极光色晕：左上普鲁士蓝 / 右下琥珀金，低透明度呼应 A/B 阵营色 -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.1"
+                android:centerY="0.05"
+                android:gradientRadius="75%p"
+                android:startColor="#1A1D4ED8"
+                android:endColor="#001D4ED8" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.92"
+                android:centerY="0.95"
+                android:gradientRadius="75%p"
+                android:startColor="#1AD97706"
+                android:endColor="#00D97706" />
+        </shape>
+    </item>
+
+    <!-- 3. 顶部中央径向柔光 (模拟顶光源照射) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.5"
+                android:centerY="0"
+                android:gradientRadius="110%p"
+                android:startColor="#80FFFFFF"
+                android:centerColor="#26FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- 4. 底部暗角 (vignette，增加纵深) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="#1F4A4337"
+                android:centerColor="#00000000"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+</layer-list>

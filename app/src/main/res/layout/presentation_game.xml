@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark">
+    android:background="@drawable/app_window_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -62,7 +62,7 @@
                 android:gravity="center"
                 android:layout_marginBottom="16dp"
                 android:padding="8dp"
-                android:background="@color/bg_dark" />
+                android:background="@drawable/turn_indicator_bg" />
 
             <!-- 玩家 B 的控制按钮 -->
             <LinearLayout
@@ -100,6 +100,7 @@
 
             <!-- 玩家 B 的待部署托盘 -->
             <TextView
+                android:id="@+id/tv_tray_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="待部署棋子 (点击选中，再点棋盘放置)"
@@ -113,6 +114,38 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:scrollbars="vertical" />
+
+            <!-- 游戏规则速查 (布阵完成进入对弈后替代托盘显示) -->
+            <ScrollView
+                android:id="@+id/sv_rules"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/rules_title"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/game_rules_text"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="3dp" />
+                </LinearLayout>
+            </ScrollView>
         </LinearLayout>
 
         <!-- 右侧：棋盘容器 (针对玩家 B 视角翻转) -->
@@ -146,6 +179,25 @@
             </FrameLayout>
         </FrameLayout>
     </LinearLayout>
+
+    <!-- 副屏全局提示条 (仿主屏 Toast)：自身旋转 180° 校正 B 读屏文字方向；
+         物理上贴帧缓冲底部，B 背面观看翻转后感知在顶部，与主屏 Toast 顶部位置一致 -->
+    <TextView
+        android:id="@+id/tv_tip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="75dp"
+        android:rotation="180"
+        android:background="@drawable/tip_toast_bg"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:elevation="10dp"
+        android:visibility="gone" />
 
     <!-- 对决裁决浮层 (覆盖全屏，旋转 180° 匹配 B 读屏方向，默认隐藏) -->
     <FrameLayout

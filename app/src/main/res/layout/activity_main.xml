@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:background="@color/bg_dark"
+    android:background="@drawable/app_window_bg"
     android:padding="16dp">
 
     <!-- 左侧：控制面板与棋子托盘 -->
@@ -55,7 +55,7 @@
             android:gravity="center"
             android:layout_marginBottom="16dp"
             android:padding="8dp"
-            android:background="@color/bg_dark" />
+            android:background="@drawable/turn_indicator_bg" />
 
         <!-- 控制按钮 -->
         <LinearLayout
@@ -93,6 +93,7 @@
 
         <!-- 待部署托盘 -->
         <TextView
+            android:id="@+id/tv_tray_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="待部署棋子 (点击选中，再点棋盘放置)"
@@ -106,6 +107,38 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:scrollbars="vertical" />
+
+        <!-- 游戏规则速查 (布阵完成进入对弈后替代托盘显示) -->
+        <ScrollView
+            android:id="@+id/sv_rules"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rules_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/game_rules_text"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:lineSpacingExtra="3dp" />
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
 
     <!-- 右侧：棋盘容器 -->

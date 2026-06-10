@@ -65,6 +65,9 @@ class MainActivity : AppCompatActivity() {
     // 副屏 Presentation 对象
     private var gamePresentation: GamePresentation? = null
 
+    // 双边确认重置：已发起重置请求的玩家集合，A/B 都点击重置后才真正重置
+    private val resetRequests = HashSet<Player>()
+
     // 对决音效播放器 (SoundPool + res/raw 音频)
     private var soundPool: SoundPool? = null
     private var sndClash = 0
@@ -215,9 +218,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnReady.setOnClickListener {
             setPlayerReady(Player.A)
         }
-        // 重置游戏
+        // 重置游戏 (需双边确认)
         binding.btnReset.setOnClickListener {
-            resetGame()
+            requestReset(Player.A)
         }
     }
 
@@ -240,12 +243,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * 双边确认重置：单边点击只发起请求，A/B 双方都点击重置后才真正重开棋局，
+     * 防止一方误触清掉对局。无副屏调试模式下单边直接重置。
+     */
+    fun requestReset(requester: Player) {
+        if (gamePresentation == null) {
+            resetGame()
+            return
+        }
+        resetRequests.add(requester)
+        if (resetRequests.size == 2) {
+            resetGame()
+            return
+        }
+        val requesterName = if (requester == Player.A) "玩家 A" else "玩家 B"
+        val tipForRequester = "已发起重置请求，等待对方点击「重置」确认"
+        val tipForOther = "$requesterName 请求重置棋局，点击「重置」即同意"
+        showToast(if (requester == Player.A) tipForRequester else tipForOther, Player.A)
+        gamePresentation?.showTip(if (requester == Player.B) tipForRequester else tipForOther)
+    }
+
+    /**
      * 玩家重置游戏
      */
     fun resetGame() {
+        resetRequests.clear()
         initGameData()
         refreshUI()
+        // 全局消息：双屏同时提示（重置可能由任一方触发）
         showToast("游戏已重置，请重新布兵")
+        gamePresentation?.showTip("游戏已重置，请重新布兵")
     }
 
     /**
@@ -290,12 +317,12 @@ class MainActivity : AppCompatActivity() {
             logicPos.row in 0..5
         }
         if (!isSelfArea) {
-            showToast("只能放置在己方大营内！")
+            showToast("只能放置在己方大营内！", clicker)
             return
         }
 
         if (GameEngine.isCamp(logicPos)) {
-            showToast("行营内不可布防！")
+            showToast("行营内不可布防！", clicker)
             return
         }
 
@@ -305,14 +332,14 @@ class MainActivity : AppCompatActivity() {
         if (selectedPiece != null) {
             // 规则验证：军旗、地雷、炸弹位置限制
             if (selectedPiece.type == PieceType.FLAG && !GameEngine.isHq(logicPos)) {
-                showToast("军旗必须放置在大本营！")
+                showToast("军旗必须放置在大本营！", clicker)
                 return
             }
             if (selectedPiece.type == PieceType.LANDMINE) {
                 // A的地雷要在 10..11 排；B的地雷要在 0..1 排
                 val isMineValid = if (clicker == Player.A) logicPos.row in 10..11 else logicPos.row in 0..1
                 if (!isMineValid) {
-                    showToast("地雷必须部署在最后两排！")
+                    showToast("地雷必须部署在最后两排！", clicker)
                     return
                 }
             }
@@ -320,7 +347,7 @@ class MainActivity : AppCompatActivity() {
                 // A炸弹不能在最前面两排 (6,7)；B炸弹不能在最前面两排 (4,5)
                 val isBombInvalid = if (clicker == Player.A) logicPos.row in 6..7 else logicPos.row in 4..5
                 if (isBombInvalid) {
-                    showToast("炸弹不可部署在最前两排！")
+                    showToast("炸弹不可部署在最前两排！", clicker)
                     return
                 }
             }
@@ -358,7 +385,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun handlePlayingClick(pos: Position, clicker: Player) {
         if (currentTurn != clicker) {
-            showToast("不是您的回合！")
+            showToast("不是您的回合！", clicker)
             return
         }
 
@@ -369,7 +396,7 @@ class MainActivity : AppCompatActivity() {
             // 选中己方要移动的棋子
             if (piece != null && piece.owner == clicker) {
                 if (piece.type == PieceType.LANDMINE || piece.type == PieceType.FLAG) {
-                    showToast("地雷和军旗不可移动！")
+                    showToast("地雷和军旗不可移动！", clicker)
                     return
                 }
                 
@@ -392,6 +419,9 @@ class MainActivity : AppCompatActivity() {
             if (highlightedTargets.contains(pos)) {
                 // 执行动作
                 moveOrAttack(selectedCell, pos)
+
+                // 继续走子视为放弃此前单方发起的重置请求
+                resetRequests.clear()
 
                 // 清理选择和高亮
                 clearActions()
@@ -626,7 +656,7 @@ class MainActivity : AppCompatActivity() {
         // 布防判定
         val myLayout = boardState.filter { it.value.owner == player }
         if (!GameEngine.verifyLayout(myLayout, player)) {
-            showToast("布防阵型不合法！请检查军旗、地雷及炸弹是否正确部署。")
+            showToast("布防阵型不合法！请检查军旗、地雷及炸弹是否正确部署。", player)
             return
         }
 
@@ -640,7 +670,9 @@ class MainActivity : AppCompatActivity() {
         if (isReadyA && isReadyB) {
             gameStage = GameStage.PLAYING
             currentTurn = Player.A
+            // 全局消息：双屏同时提示
             showToast("部署完毕！对决开始，由玩家 A 率先行动！")
+            gamePresentation?.showTip("部署完毕！对决开始，由玩家 A 率先行动！")
         }
         refreshUI()
     }
@@ -734,7 +766,7 @@ class MainActivity : AppCompatActivity() {
         if (player == Player.A) trayPiecesA.clear() else trayPiecesB.clear()
 
         refreshUI()
-        showToast("${if (player == Player.A) "玩家 A" else "玩家 B"} 自动部署就绪")
+        showToast("${if (player == Player.A) "玩家 A" else "玩家 B"} 自动部署就绪", player)
     }
 
     /**
@@ -763,12 +795,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 2. 刷新主屏待部署棋子托盘
+        // 2. 刷新主屏待部署棋子托盘 (对弈/结束阶段改为显示游戏规则速查)
         if (gameStage == GameStage.LAYOUT) {
+            binding.tvTrayLabel.visibility = View.VISIBLE
             binding.rvPieceTray.visibility = View.VISIBLE
+            binding.svRules.visibility = View.GONE
             trayAdapter?.updateList(trayPiecesA, selectedPieceA)
         } else {
+            binding.tvTrayLabel.visibility = View.GONE
             binding.rvPieceTray.visibility = View.GONE
+            binding.svRules.visibility = View.VISIBLE
         }
 
         // 3. 刷新主屏 60 个棋格与棋子渲染
@@ -872,7 +908,15 @@ class MainActivity : AppCompatActivity() {
         class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
     }
 
-    fun showToast(msg: String) {
+    /**
+     * 按触发方路由提示：B 在副屏操作触发的提示显示到副屏提示条
+     * （Android Toast 只会显示在主屏，Presentation 副屏无法显示 Toast）
+     */
+    fun showToast(msg: String, target: Player = Player.A) {
+        if (target == Player.B && gamePresentation != null) {
+            gamePresentation?.showTip(msg)
+            return
+        }
         val toast = Toast(this)
         val tv = android.widget.TextView(this)
         tv.text = msg

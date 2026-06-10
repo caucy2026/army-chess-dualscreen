@@ -97,9 +97,9 @@ class GamePresentation(
         binding.btnReady.setOnClickListener {
             mainActivity.setPlayerReady(Player.B)
         }
-        // 重置
+        // 重置 (需双边确认)
         binding.btnReset.setOnClickListener {
-            mainActivity.resetGame()
+            mainActivity.requestReset(Player.B)
         }
     }
 
@@ -137,12 +137,16 @@ class GamePresentation(
             }
         }
 
-        // 2. 刷新待部署托盘
+        // 2. 刷新待部署托盘 (对弈/结束阶段改为显示游戏规则速查)
         if (stage == MainActivity.GameStage.LAYOUT) {
+            binding.tvTrayLabel.visibility = View.VISIBLE
             binding.rvPieceTray.visibility = View.VISIBLE
+            binding.svRules.visibility = View.GONE
             trayAdapter?.updateList(mainActivity.trayPiecesB, mainActivity.selectedPieceB)
         } else {
+            binding.tvTrayLabel.visibility = View.GONE
             binding.rvPieceTray.visibility = View.GONE
+            binding.svRules.visibility = View.VISIBLE
         }
 
         // 3. 刷新棋盘单元格与棋子渲染
@@ -200,6 +204,22 @@ class GamePresentation(
                 tvPiece.visibility = View.GONE
             }
         }
+    }
+
+    /**
+     * 副屏全局提示条（仿主屏 Toast）：B 在副屏操作触发的提示必须显示在副屏，
+     * 不可使用 Android Toast（Toast 只会落在主屏）。2 秒自动隐藏，连续提示自动续期。
+     */
+    private var tipHideRunnable: Runnable? = null
+
+    fun showTip(msg: String) {
+        if (!::binding.isInitialized) return
+        binding.tvTip.text = msg
+        binding.tvTip.visibility = View.VISIBLE
+        tipHideRunnable?.let { binding.tvTip.removeCallbacks(it) }
+        val hide = Runnable { binding.tvTip.visibility = View.GONE }
+        tipHideRunnable = hide
+        binding.tvTip.postDelayed(hide, 2000)
     }
 
     /**
