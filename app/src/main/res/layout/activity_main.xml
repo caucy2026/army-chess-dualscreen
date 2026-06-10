@@ -33,17 +33,10 @@
             app:cardPreventCornerOverlap="false"
             app:cardUseCompatPadding="false">
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/bg_fresh_landscape"
-                android:scaleType="centerCrop" />
-
-            <!-- 给图片加一层半透明蒙版，使文字更易读并提升朦胧玻璃质感 -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#A6FFFFFF" />
+                android:background="@drawable/glass_panel_bg" />
 
             <LinearLayout
                 android:layout_width="match_parent"

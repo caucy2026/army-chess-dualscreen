@@ -33,6 +33,15 @@ class GamePresentation(
         binding = PresentationGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 设置全屏沉浸模式 (隐藏状态栏和导航栏)
+        window?.let { win ->
+            androidx.core.view.WindowCompat.setDecorFitsSystemWindows(win, false)
+            androidx.core.view.WindowInsetsControllerCompat(win, binding.root).let { controller ->
+                controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        }
+
         // 副屏棋盘背景按 B 视角绘制 (B 大本营落在画布下半区)，
         // 外层 XML 的 180° 物理旋转仅用于校正 B 背靠背读屏的文字/方向
         binding.boardBackgroundView.perspective = Player.B
