@@ -317,10 +317,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             if (selectedPiece.type == PieceType.BOMB) {
-                // A炸弹不能在排6；B炸弹不能在排5
-                val isBombInvalid = if (clicker == Player.A) logicPos.row == 6 else logicPos.row == 5
+                // A炸弹不能在最前面两排 (6,7)；B炸弹不能在最前面两排 (4,5)
+                val isBombInvalid = if (clicker == Player.A) logicPos.row in 6..7 else logicPos.row in 4..5
                 if (isBombInvalid) {
-                    Toast.makeText(this, "炸弹不可部署在最前排！", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "炸弹不可部署在最前两排！", Toast.LENGTH_SHORT).show()
                     return
                 }
             }

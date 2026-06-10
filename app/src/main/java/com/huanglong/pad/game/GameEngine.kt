@@ -322,7 +322,7 @@ object GameEngine {
             listOf(Position(0, 1), Position(0, 3))
         }
         val mineRows = if (player == Player.A) 10..11 else 0..1
-        val firstRow = if (player == Player.A) 6 else 5
+        val firstTwoRows = if (player == Player.A) 6..7 else 4..5
 
         for ((pos, piece) in playerPieces) {
             // 棋子布防区必须在己方半区
@@ -341,8 +341,8 @@ object GameEngine {
                     if (pos.row !in mineRows) return false
                 }
                 PieceType.BOMB -> {
-                    // 炸弹不能在最前排
-                    if (pos.row == firstRow) return false
+                    // 炸弹不能在最前两排
+                    if (pos.row in firstTwoRows) return false
                 }
                 else -> {}
             }
