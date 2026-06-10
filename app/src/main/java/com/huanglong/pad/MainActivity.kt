@@ -182,6 +182,8 @@ class MainActivity : AppCompatActivity() {
         selectedCellA = null
         selectedCellB = null
         highlightedTargets.clear()
+        lastMoveFrom = null
+        lastMoveTo = null
         gameStage = GameStage.LAYOUT
         currentTurn = Player.A
         isReadyA = false

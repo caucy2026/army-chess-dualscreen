@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">双屏面对面军棋</string>
+    <string name="app_name">陆战棋</string>
     <string name="player_a_title">玩家 A (主屏)</string>
     <string name="player_b_title">玩家 B (副屏)</string>
     <string name="ready_btn_text">完成布阵</string>
