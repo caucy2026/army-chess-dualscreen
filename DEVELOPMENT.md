@@ -1,4 +1,4 @@
-# 双屏军棋 (DoubleScreenChess) 开发与踩坑技术文档
+﻿# 双屏军棋 (DoubleScreenChess) 开发与踩坑技术文档
 
 本项目是一款基于 **KEMI_7M600_T1** 双屏 Android 平板（内置主屏 Display 0 与外接副屏 Display 2）量身定制的军棋（陆战棋）暗棋实时对战应用。
 
@@ -32,7 +32,7 @@
    由于主屏 `MainActivity` 和副屏 `GamePresentation` (继承自 `android.app.Presentation`) 运行在同一个应用进程和同一个 JVM 中，它们可以直接共享内存中的 `boardState`（棋盘数据 Map）以及游戏阶段变量。主屏通过主动调用 `gamePresentation?.refreshUI()` 确保副屏渲染百分之百秒级同步。
 2. **双屏物理旋转 180 度 (Rotation 180) 与直连映射**：
    由于主副屏背靠背或对向摆放，玩家 B 看到的画面原本是颠倒的。
-   * **物理旋转与防颠倒**：我们在副屏布局 XML 最外层 `LinearLayout` 静态声明 `android:rotation="180"` 锁定。为了防止旋转后原本底部的待部署托盘跑到上方，我们对控制面板内部的 View 进行了**完全反序排布**，使旋转后的排版（标题在上，按钮居中，托盘在最下方贴近手边）完美符合主屏的操作直觉。
+   * **物理旋转与同序声明（已修正，勿倒序）**：我们在副屏布局 XML 最外层 `LinearLayout` 静态声明 `android:rotation="180"` 锁定，用于校正 B 背靠背读屏的文字方向。由于"XML 布局 → 旋转 180° 入帧缓冲 → B 从背面观看再翻 180°"双重翻转相互抵消，**B 感知到的顺序就是 XML 声明顺序**。因此副屏控制面板必须与主屏 `activity_main.xml` 完全同序声明（标题在上、按钮居中、托盘在最下方贴近手边），两屏风格才完全一致。早期版本误用"完全反序排布"导致 B 看到标题在底部，已修正。
    * **触控自动映射与直连**：旋转后 Android 框架会自动将 `MotionEvent` 触控坐标旋转 180 度。因此，我们彻底免除了在代码里做 `11 - r` 和 `4 - c` 的双重逻辑翻转，所有网格物理上直接与绝对逻辑坐标 `Position(r, c)` 直连映射，配合 `perspective = Player.A` 的自定义棋盘背景，大幅简化了算法复杂度并确保了玩家 B 视角下己方布兵与大本营正好在屏幕下方。
 
 ---
@@ -85,11 +85,11 @@
 
 ### 1. 编译并无线部署至平板并远程启动
 ```powershell
-& "C:\Users\Laomo\.gradle\wrapper\dists\gradle-8.13-bin\5xuhj0ry160q40clulazy9h7d\gradle-8.13\bin\gradle.bat" assembleDebug; adb connect 192.168.1.196:5555; adb install -r app/build/outputs/apk/debug/app-debug.apk; adb shell am start -n com.huanglong.pad/com.huanglong.pad.MainActivity
+& "C:\Users\Laomo\.gradle\wrapper\dists\gradle-8.13-bin\5xuhj0ry160q40clulazy9h7d\gradle-8.13\bin\gradle.bat" assembleDebug; adb connect 172.21.16.133:5555; adb install -r app/build/outputs/apk/debug/app-debug.apk; adb shell am start -n com.huanglong.pad/com.huanglong.pad.MainActivity
 ```
 
 ### 2. 截取双屏实机运行画面并拉回到电脑桌面
 ```powershell
-adb connect 192.168.1.196:5555; adb shell screencap -p /sdcard/screenshot_main.png; adb shell screencap -d 2 -p /sdcard/screenshot_sub.png; adb pull /sdcard/screenshot_main.png C:\Users\Laomo\Desktop\screenshot_main.png; adb pull /sdcard/screenshot_sub.png C:\Users\Laomo\Desktop\screenshot_sub.png
+adb connect 172.21.16.133:5555; adb shell screencap -p /sdcard/screenshot_main.png; adb shell screencap -d 2 -p /sdcard/screenshot_sub.png; adb pull /sdcard/screenshot_main.png C:\Users\Laomo\Desktop\screenshot_main.png; adb pull /sdcard/screenshot_sub.png C:\Users\Laomo\Desktop\screenshot_sub.png
 ```
 *(注：副屏截图使用 `-d 2` 参数直接映射物理外接屏 Display 2)*

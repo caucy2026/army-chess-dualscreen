@@ -36,17 +36,18 @@ object GameEngine {
 
     private fun initRailways(): Set<Position> {
         val railways = mutableSetOf<Position>()
-        // 外围四边铁路 (Row 1 和 10，Col 0 和 4)
+        // 横向铁路：每方第二排 (Row 1/10) 与紧贴山界的两条前线排 (Row 5/6)，全宽贯通
         for (c in 0 until COLS) {
             railways.add(Position(1, c))
             railways.add(Position(5, c))
             railways.add(Position(6, c))
             railways.add(Position(10, c))
         }
+        // 纵向铁路：仅左右两侧边线 (Col 0/4) 纵贯 Row 1..10；
+        // 中央 Col 2 只有跨山界的一段 (Row 5-6，两点已含在前线排中)，半场内为普通公路
         for (r in 1..10) {
             railways.add(Position(r, 0))
             railways.add(Position(r, 4))
-            railways.add(Position(r, 2)) // 中央铁路线 Col 2
         }
         return railways
     }
@@ -108,8 +109,8 @@ object GameEngine {
         // 行营避难：行营内已有棋子时不可进入（无论敌友，行营内棋子不可被攻击）
         if (isCamp(to) && targetPiece != null) return false
 
-        // 铁路行棋逻辑（行营内棋子每次只能走一步，不享受铁路直达）
-        if (isRailway(from) && isRailway(to) && !isCamp(from)) {
+        // 铁路行棋逻辑（标准棋盘中行营均不在铁路上）
+        if (isRailway(from) && isRailway(to)) {
             // 界河跨越校验
             if (isRiverCrossValid(from, to)) {
                 // 如果是工兵，可以拐弯走行
@@ -170,7 +171,8 @@ object GameEngine {
         // 必须在同一直线铁路上（同Row或同Col）
         if (from.row != to.row && from.col != to.col) return false
 
-        // 如果在同Col，只有 Col 0, 2, 4 构成从 Row 1..10 的纵向铁路
+        // 如果在同Col：Col 0/4 为纵贯铁路；Col 2 仅有跨山界的 Row 5-6 一段
+        // （更长的 Col 2 纵向路径会因中间点不是铁路而被拦下）
         if (from.col == to.col) {
             val col = from.col
             if (col != 0 && col != 2 && col != 4) return false
@@ -272,8 +274,8 @@ object GameEngine {
                 // 工兵排雷，工兵活
                 BattleResult.ATTACKER_WON
             } else {
-                // 其他子踩雷，同归于尽
-                BattleResult.BOTH_DIED
+                // 标准规则：其他子踩雷阵亡，地雷保留（仅工兵能挖雷、炸弹能同归）
+                BattleResult.DEFENDER_WON
             }
         }
 
@@ -283,6 +285,21 @@ object GameEngine {
             attacker.type.power < defender.type.power -> BattleResult.DEFENDER_WON
             else -> BattleResult.BOTH_DIED // 战斗力相同，同归于尽
         }
+    }
+
+    /**
+     * 判断玩家是否还存在任何合法走法（标准规则：轮到无棋可走的一方判负）
+     */
+    fun hasAnyValidMove(board: Map<Position, ChessPiece>, player: Player): Boolean {
+        for ((from, piece) in board) {
+            if (piece.owner != player) continue
+            for (r in 0 until ROWS) {
+                for (c in 0 until COLS) {
+                    if (isValidMove(from, Position(r, c), board, player)) return true
+                }
+            }
+        }
+        return false
     }
 
     /**

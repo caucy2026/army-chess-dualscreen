@@ -76,6 +76,27 @@ class BoardBackgroundView @JvmOverloads constructor(
         strokeWidth = 4.5f
     }
 
+    // 7.5 界河横带渐变画笔、山界圆圈画笔与棋盘外框画笔
+    private val riverBandPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+
+    private val mountainFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#16213A") // 山界圆圈深蓝填充，区别于普通兵站
+        style = Paint.Style.FILL
+    }
+
+    private val mountainStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#64748B")
+        strokeWidth = 3f
+        style = Paint.Style.STROKE
+    }
+
+    private val frameGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 5f
+    }
+
     // 8. 各种文字画笔
     private val labelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#475569") // 兵站、大本营背景文字颜色 (灰色)
@@ -85,11 +106,11 @@ class BoardBackgroundView @JvmOverloads constructor(
     }
 
     private val riverTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#334155") // 山界水界文字颜色 (深灰)
-        textSize = 36f
+        color = Color.parseColor("#8FA3BF") // 山界圆圈印章文字颜色
+        textSize = 26f
         textAlign = Paint.Align.CENTER
-        typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC)
-        letterSpacing = 0.3f
+        typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        letterSpacing = 0.05f
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -131,7 +152,18 @@ class BoardBackgroundView @JvmOverloads constructor(
             return points[drawPos.row][drawPos.col]
         }
 
-        // 2. 绘制公路普通连线 (斜线与直线)
+        // 2. 界河横带底色（物理上永远位于画布纵向正中第 5/6 行之间，先画垫底）
+        val riverY = 6 * cellH
+        val bandHalf = cellH * 0.46f
+        riverBandPaint.shader = LinearGradient(
+            0f, riverY - bandHalf, 0f, riverY + bandHalf,
+            intArrayOf(0x001E293B, 0x4D24344F, 0x001E293B),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRect(0f, riverY - bandHalf, w, riverY + bandHalf, riverBandPaint)
+
+        // 3. 绘制公路普通连线 (斜线与直线)
         for (r in 0 until GameEngine.ROWS) {
             for (c in 0 until GameEngine.COLS) {
                 val fromPos = Position(r, c)
@@ -151,14 +183,16 @@ class BoardBackgroundView @JvmOverloads constructor(
             }
         }
 
-        // 3. 绘制黑白相间发光铁轨线
+        // 4. 绘制黑白相间发光铁轨线
         val railwayLines = mutableListOf<Pair<Position, Position>>()
-        // 纵向铁路 (Col 0, 2, 4；Row 1..10)
-        for (c in listOf(0, 2, 4)) {
+        // 纵向铁路：左右两侧边线 (Col 0/4) 纵贯 Row 1..10
+        for (c in listOf(0, 4)) {
             for (r in 1 until 10) {
                 railwayLines.add(Pair(Position(r, c), Position(r + 1, c)))
             }
         }
+        // 中央 Col 2 铁路仅有跨越山界的一段 (Row 5 - Row 6)，半场内为公路
+        railwayLines.add(Pair(Position(5, 2), Position(6, 2)))
         // 横向铁路 (Row 1, 5, 6, 10；Col 0..4)
         for (r in listOf(1, 5, 6, 10)) {
             for (c in 0 until 4) {
@@ -177,7 +211,7 @@ class BoardBackgroundView @JvmOverloads constructor(
             canvas.drawLine(p1.x, p1.y, p2.x, p2.y, railTrackPaint)
         }
 
-        // 4. 绘制 60 个棋盘网格单元的外框（兵站、大本营、行营底色）
+        // 5. 绘制 60 个棋盘网格单元的外框（兵站、大本营、行营底色）
         val rectW = cellW * 0.84f
         val rectH = cellH * 0.72f
 
@@ -216,20 +250,16 @@ class BoardBackgroundView @JvmOverloads constructor(
             }
         }
 
-        // 5. 绘制界河区域 (Row 5 和 Row 6 之间)
-        // 物理Y中心轴
-        val riverY = if (perspective == Player.A) {
-            5 * cellH + cellH
-        } else {
-            6 * cellH
+        // 6. 绘制山界圆圈（Col 1 与 Col 3 处山岭阻断，不可通行，对应标准棋盘的两个"山界"）
+        val mountainR = Math.min(cellW, cellH) * 0.36f
+        for (c in listOf(1, 3)) {
+            val cx = c * cellW + cellW / 2f
+            canvas.drawCircle(cx, riverY, mountainR, mountainFillPaint)
+            canvas.drawCircle(cx, riverY, mountainR, mountainStrokePaint)
+            canvas.drawText("山界", cx, riverY + 9f, riverTextPaint)
         }
 
-        // 绘制“山界”与“水界”
-        val textY = riverY + 12f
-        canvas.drawText("山 界", cellW * 1.5f, textY, riverTextPaint)
-        canvas.drawText("水 界", cellW * 3.5f, textY, riverTextPaint)
-
-        // 6. 在界河的 Col 0, Col 2, Col 4 处绘制三个“前线”特殊格子
+        // 7. 在界河的 Col 0, Col 2, Col 4 处绘制三个“前线”特殊格子
         val frontW = cellW * 0.88f
         val frontH = cellH * 0.65f
         for (c in listOf(0, 2, 4)) {
@@ -247,5 +277,9 @@ class BoardBackgroundView @JvmOverloads constructor(
             canvas.drawRoundRect(fRect, 6f, 6f, roadPaint)
             canvas.drawText("前线", frontX, riverY + 10f, labelTextPaint)
         }
+
+        // 8. 棋盘霓虹圆角外框（按视角主题色淡淡描边收束整体）
+        frameGlowPaint.color = (themeColor and 0x00FFFFFF) or 0x59000000
+        canvas.drawRoundRect(4f, 4f, w - 4f, h - 4f, 20f, 20f, frameGlowPaint)
     }
 }

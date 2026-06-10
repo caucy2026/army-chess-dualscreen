@@ -11,7 +11,9 @@
         android:padding="16dp"
         android:rotation="180">
 
-        <!-- 左侧：控制面板与棋子托盘 (针对玩家 B) -->
+        <!-- 左侧：控制面板与棋子托盘 (针对玩家 B)。
+             注意：根布局 rotation=180° 与 B 背靠背观看双重翻转相互抵消，
+             B 感知到的顺序就是此处声明顺序，因此必须与主屏 activity_main.xml 完全同序声明 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -21,22 +23,46 @@
             android:padding="16dp"
             android:layout_marginEnd="16dp">
 
-            <!-- 玩家 B 的待部署托盘 -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_piece_tray"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:scrollbars="vertical" />
-
+            <!-- 顶部游戏状态 -->
             <TextView
+                android:id="@+id/tv_role_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="待部署棋子 (点击选中，再点棋盘放置)"
+                android:text="@string/player_b_title"
+                android:textColor="@color/color_b"
+                android:textSize="22sp"
+                android:fontFamily="sans-serif-black"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="等待主屏开启连接..."
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp" />
+                android:textSize="14sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:background="@color/border_color" />
+
+            <!-- 轮次指示器 -->
+            <TextView
+                android:id="@+id/tv_turn_indicator"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="等待双方玩家就绪..."
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="16dp"
+                android:padding="8dp"
+                android:background="@color/bg_dark" />
 
             <!-- 玩家 B 的控制按钮 -->
             <LinearLayout
@@ -72,45 +98,21 @@
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
 
-            <!-- 轮次指示器 -->
+            <!-- 玩家 B 的待部署托盘 -->
             <TextView
-                android:id="@+id/tv_turn_indicator"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="等待双方玩家就绪..."
-                android:textColor="@color/white"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginBottom="16dp"
-                android:padding="8dp"
-                android:background="@color/bg_dark" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="12dp"
-                android:background="@color/border_color" />
-
-            <TextView
-                android:id="@+id/tv_status_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="等待主屏开启连接..."
+                android:text="待部署棋子 (点击选中，再点棋盘放置)"
                 android:textColor="@color/text_secondary"
-                android:textSize="14sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
 
-            <TextView
-                android:id="@+id/tv_role_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/player_b_title"
-                android:textColor="@color/color_b"
-                android:textSize="22sp"
-                android:fontFamily="sans-serif-black"
-                android:textStyle="bold" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_piece_tray"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:scrollbars="vertical" />
         </LinearLayout>
 
         <!-- 右侧：棋盘容器 (针对玩家 B 视角翻转) -->

@@ -131,8 +131,9 @@ class GamePresentation(
             }
             MainActivity.GameStage.FINISHED -> {
                 val winner = mainActivity.winner
-                binding.tvStatusText.text = "游戏结束"
-                binding.tvTurnIndicator.text = if (winner == Player.B) "🎉 恭喜！您获胜了！" else "❌ 您输了，大本营失守！"
+                val reason = mainActivity.winReason
+                binding.tvStatusText.text = if (reason.isEmpty()) "游戏结束" else "游戏结束：$reason"
+                binding.tvTurnIndicator.text = if (winner == Player.B) "🎉 恭喜！您获胜了！" else "❌ 您输了！"
             }
         }
 
@@ -182,6 +183,11 @@ class GamePresentation(
                     if (stage == MainActivity.GameStage.FINISHED) {
                         // 如果碰子曝光或游戏结束，亮明
                         tvPiece.setBackgroundResource(R.drawable.piece_a_bg)
+                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.white))
+                    } else if (piece.type == PieceType.FLAG &&
+                        mainActivity.revealedFlagOwners.contains(piece.owner)) {
+                        // 司令阵亡，敌方军旗强制亮明（保留文字"军旗"，红底天窗）
+                        tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
                         tvPiece.setTextColor(ContextCompat.getColor(context, R.color.white))
                     } else {
                         // 背面朝上 (锁头图标)

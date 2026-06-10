@@ -1,6 +1,8 @@
 package com.huanglong.pad
 
+import android.app.ActivityOptions
 import android.content.Context
+import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.media.AudioAttributes
 import android.media.SoundPool
@@ -37,6 +39,10 @@ class MainActivity : AppCompatActivity() {
     var isReadyA = false
     var isReadyB = false
     var winner: Player? = null
+    var winReason = ""
+
+    // 标准规则：司令阵亡后该方军旗强制亮明（记录需亮旗的阵营）
+    val revealedFlagOwners = HashSet<Player>()
 
     // 棋盘数据结构：物理位置映射到棋子对象
     val boardState = HashMap<Position, ChessPiece>()
@@ -73,7 +79,23 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
+        // 双屏防呆：从副屏侧桌面启动时系统会把 Activity 分配到副屏 (Display 2)，
+        // 而 Presentation 也固定投向副屏将其覆盖，主屏空白。此处强制迁回主屏 (Display 0) 重启自身。
+        @Suppress("DEPRECATION")
+        val launchedDisplayId = windowManager.defaultDisplay.displayId
+        if (launchedDisplayId != Display.DEFAULT_DISPLAY) {
+            val options = ActivityOptions.makeBasic()
+            options.launchDisplayId = Display.DEFAULT_DISPLAY
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                options.toBundle()
+            )
+            finish()
+            return
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -125,6 +147,8 @@ class MainActivity : AppCompatActivity() {
         isReadyA = false
         isReadyB = false
         winner = null
+        winReason = ""
+        revealedFlagOwners.clear()
 
         // 填充玩家 A 的 25 颗备选棋子
         for (type in PieceType.values()) {
@@ -368,12 +392,20 @@ class MainActivity : AppCompatActivity() {
             if (highlightedTargets.contains(pos)) {
                 // 执行动作
                 moveOrAttack(selectedCell, pos)
-                
+
                 // 清理选择和高亮
                 clearActions()
-                
+
                 // 转换回合
                 currentTurn = if (currentTurn == Player.A) Player.B else Player.A
+
+                // 标准规则：轮到的一方若无任何合法走法，则判负
+                if (gameStage == GameStage.PLAYING &&
+                    !GameEngine.hasAnyValidMove(boardState, currentTurn)) {
+                    gameStage = GameStage.FINISHED
+                    winner = if (currentTurn == Player.A) Player.B else Player.A
+                    winReason = "${if (currentTurn == Player.A) "玩家 A" else "玩家 B"} 无棋可走"
+                }
             } else {
                 // 取消选择或者更换选中子
                 clearActions()
@@ -422,21 +454,35 @@ class MainActivity : AppCompatActivity() {
                 BattleResult.ATTACKER_WON -> {
                     // 攻方存活，占领防方格子（全程暗棋，身份不亮明）
                     boardState[to] = attacker
+                    onPieceKilled(defender)
                 }
                 BattleResult.DEFENDER_WON -> {
                     // 防方存活，留守原地（全程暗棋，身份不亮明）
+                    onPieceKilled(attacker)
                 }
                 BattleResult.BOTH_DIED -> {
                     // 同归于尽
                     boardState.remove(to)
+                    onPieceKilled(attacker)
+                    onPieceKilled(defender)
                 }
                 BattleResult.FLAG_CAPTURED -> {
                     // 夺旗，宣告胜利
                     boardState.remove(to)
                     gameStage = GameStage.FINISHED
                     winner = attacker.owner
+                    winReason = "军旗被夺"
                 }
             }
+        }
+    }
+
+    /**
+     * 棋子阵亡结算：司令阵亡时按标准规则强制亮明该方军旗
+     */
+    private fun onPieceKilled(piece: ChessPiece) {
+        if (piece.type == PieceType.COMMANDER) {
+            revealedFlagOwners.add(piece.owner)
         }
     }
 
@@ -675,8 +721,8 @@ class MainActivity : AppCompatActivity() {
                 binding.btnReady.visibility = View.GONE
             }
             GameStage.FINISHED -> {
-                binding.tvStatusText.text = "游戏结束"
-                binding.tvTurnIndicator.text = if (winner == Player.A) "🎉 恭喜！您获胜了！" else "❌ 您输了，大本营失守！"
+                binding.tvStatusText.text = if (winReason.isEmpty()) "游戏结束" else "游戏结束：$winReason"
+                binding.tvTurnIndicator.text = if (winner == Player.A) "🎉 恭喜！您获胜了！" else "❌ 您输了！"
             }
         }
 
@@ -718,6 +764,10 @@ class MainActivity : AppCompatActivity() {
                     // 敌方：暗子
                     if (gameStage == GameStage.FINISHED) {
                         tvPiece.setBackgroundResource(R.drawable.piece_b_bg)
+                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
+                    } else if (piece.type == PieceType.FLAG && revealedFlagOwners.contains(piece.owner)) {
+                        // 司令阵亡，敌方军旗强制亮明（保留文字"军旗"，红底天窗）
+                        tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
                         tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
                     } else {
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
