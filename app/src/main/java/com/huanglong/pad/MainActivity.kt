@@ -233,9 +233,9 @@ class MainActivity : AppCompatActivity() {
             gamePresentation = GamePresentation(this, targetDisplay).apply {
                 show()
             }
-            Toast.makeText(this, "检测到副屏并成功投送！", Toast.LENGTH_SHORT).show()
+            showToast("检测到副屏并成功投送！")
         } else {
-            Toast.makeText(this, "未检测到外部副屏。您可继续在主屏调试。", Toast.LENGTH_LONG).show()
+            showToast("未检测到外部副屏。您可继续在主屏调试。")
         }
     }
 
@@ -245,7 +245,7 @@ class MainActivity : AppCompatActivity() {
     fun resetGame() {
         initGameData()
         refreshUI()
-        Toast.makeText(this, "游戏已重置，请重新布兵", Toast.LENGTH_SHORT).show()
+        showToast("游戏已重置，请重新布兵")
     }
 
     /**
@@ -290,12 +290,12 @@ class MainActivity : AppCompatActivity() {
             logicPos.row in 0..5
         }
         if (!isSelfArea) {
-            Toast.makeText(this, "只能放置在己方大营内！", Toast.LENGTH_SHORT).show()
+            showToast("只能放置在己方大营内！")
             return
         }
 
         if (GameEngine.isCamp(logicPos)) {
-            Toast.makeText(this, "行营内不可布防！", Toast.LENGTH_SHORT).show()
+            showToast("行营内不可布防！")
             return
         }
 
@@ -305,14 +305,14 @@ class MainActivity : AppCompatActivity() {
         if (selectedPiece != null) {
             // 规则验证：军旗、地雷、炸弹位置限制
             if (selectedPiece.type == PieceType.FLAG && !GameEngine.isHq(logicPos)) {
-                Toast.makeText(this, "军旗必须放置在大本营！", Toast.LENGTH_SHORT).show()
+                showToast("军旗必须放置在大本营！")
                 return
             }
             if (selectedPiece.type == PieceType.LANDMINE) {
                 // A的地雷要在 10..11 排；B的地雷要在 0..1 排
                 val isMineValid = if (clicker == Player.A) logicPos.row in 10..11 else logicPos.row in 0..1
                 if (!isMineValid) {
-                    Toast.makeText(this, "地雷必须部署在最后两排！", Toast.LENGTH_SHORT).show()
+                    showToast("地雷必须部署在最后两排！")
                     return
                 }
             }
@@ -320,7 +320,7 @@ class MainActivity : AppCompatActivity() {
                 // A炸弹不能在最前面两排 (6,7)；B炸弹不能在最前面两排 (4,5)
                 val isBombInvalid = if (clicker == Player.A) logicPos.row in 6..7 else logicPos.row in 4..5
                 if (isBombInvalid) {
-                    Toast.makeText(this, "炸弹不可部署在最前两排！", Toast.LENGTH_SHORT).show()
+                    showToast("炸弹不可部署在最前两排！")
                     return
                 }
             }
@@ -358,7 +358,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun handlePlayingClick(pos: Position, clicker: Player) {
         if (currentTurn != clicker) {
-            Toast.makeText(this, "不是您的回合！", Toast.LENGTH_SHORT).show()
+            showToast("不是您的回合！")
             return
         }
 
@@ -369,7 +369,7 @@ class MainActivity : AppCompatActivity() {
             // 选中己方要移动的棋子
             if (piece != null && piece.owner == clicker) {
                 if (piece.type == PieceType.LANDMINE || piece.type == PieceType.FLAG) {
-                    Toast.makeText(this, "地雷和军旗不可移动！", Toast.LENGTH_SHORT).show()
+                    showToast("地雷和军旗不可移动！")
                     return
                 }
                 
@@ -593,7 +593,7 @@ class MainActivity : AppCompatActivity() {
         tvAttacker.setBackgroundResource(if (attacker.owner == Player.A) R.drawable.piece_a_bg else R.drawable.piece_b_bg)
 
         // 渲染防守方：暗棋裁决不公开身份，仅显示锁 🔒
-        tvDefender.text = "🔒"
+        tvDefender.text = ""
         tvDefender.setBackgroundResource(R.drawable.piece_enemy_bg)
 
         tvResult.text = resultText
@@ -620,7 +620,7 @@ class MainActivity : AppCompatActivity() {
         // 布防判定
         val myLayout = boardState.filter { it.value.owner == player }
         if (!GameEngine.verifyLayout(myLayout, player)) {
-            Toast.makeText(this, "布防阵型不合法！请检查军旗、地雷及炸弹是否正确部署。", Toast.LENGTH_LONG).show()
+            showToast("布防阵型不合法！请检查军旗、地雷及炸弹是否正确部署。")
             return
         }
 
@@ -634,7 +634,7 @@ class MainActivity : AppCompatActivity() {
         if (isReadyA && isReadyB) {
             gameStage = GameStage.PLAYING
             currentTurn = Player.A
-            Toast.makeText(this, "部署完毕！对决开始，由玩家 A 率先行动！", Toast.LENGTH_SHORT).show()
+            showToast("部署完毕！对决开始，由玩家 A 率先行动！")
         }
         refreshUI()
     }
@@ -728,7 +728,7 @@ class MainActivity : AppCompatActivity() {
         if (player == Player.A) trayPiecesA.clear() else trayPiecesB.clear()
 
         refreshUI()
-        Toast.makeText(this, "${if (player == Player.A) "玩家 A" else "玩家 B"} 自动部署就绪", Toast.LENGTH_SHORT).show()
+        showToast("${if (player == Player.A) "玩家 A" else "玩家 B"} 自动部署就绪")
     }
 
     /**
@@ -802,7 +802,7 @@ class MainActivity : AppCompatActivity() {
                         tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
                     } else {
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
-                        tvPiece.text = "🔒"
+                        tvPiece.text = ""
                         tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
                     }
                 }
@@ -865,4 +865,23 @@ class MainActivity : AppCompatActivity() {
 
         class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
     }
+
+    fun showToast(msg: String) {
+        val toast = Toast(this)
+        val tv = android.widget.TextView(this)
+        tv.text = msg
+        tv.setTextColor(android.graphics.Color.WHITE)
+        tv.setPadding(40, 20, 40, 20)
+        tv.textSize = 18f
+        val shape = android.graphics.drawable.GradientDrawable()
+        shape.setColor(android.graphics.Color.parseColor("#CC000000"))
+        shape.cornerRadius = 16f
+        tv.background = shape
+        toast.view = tv
+        toast.duration = Toast.LENGTH_SHORT
+        // 设置在顶部，避免遮挡底部棋盘棋子
+        toast.setGravity(android.view.Gravity.TOP, 0, 150)
+        toast.show()
+    }
+
 }

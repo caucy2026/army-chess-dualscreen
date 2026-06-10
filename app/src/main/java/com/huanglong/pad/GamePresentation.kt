@@ -192,7 +192,7 @@ class GamePresentation(
                     } else {
                         // 背面朝上 (锁头图标)
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
-                        tvPiece.text = "🔒"
+                        tvPiece.text = ""
                         tvPiece.setTextColor(ContextCompat.getColor(context, R.color.white))
                     }
                 }
@@ -214,7 +214,7 @@ class GamePresentation(
         binding.subFighterSelf.setBackgroundResource(
             if (attacker.owner == Player.A) R.drawable.piece_a_bg else R.drawable.piece_b_bg
         )
-        binding.subFighterEnemy.text = "🔒"
+        binding.subFighterEnemy.text = ""
         binding.subFighterEnemy.setBackgroundResource(R.drawable.piece_enemy_bg)
         binding.subBattleResultText.text = resultText
 
