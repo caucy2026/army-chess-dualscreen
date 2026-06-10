@@ -703,9 +703,9 @@ class MainActivity : AppCompatActivity() {
             myPieces.remove(minePieces[i])
         }
 
-        // (4) 炸弹不能在第一排
+        // (4) 炸弹不能在最前两排
         val bombPositions = availablePositions.filter {
-            if (player == Player.A) it.row != 6 else it.row != 5
+            if (player == Player.A) it.row !in 6..7 else it.row !in 4..5
         }.shuffled().take(2)
         val bombPieces = myPieces.filter { it.type == PieceType.BOMB }
         for (i in 0 until 2) {
