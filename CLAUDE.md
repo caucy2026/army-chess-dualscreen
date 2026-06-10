@@ -51,3 +51,12 @@
 3. **任务跟踪 (Goal-Driven)**：使用 `tasks.md` 来追踪任务进度。
 4. **双向文档同步 (Dual-Context Sync)**：更新 `CLAUDE.md` 时，必须同步创建/更新 `gemini.md`，保持内容完全一致。
 5. **中文回复 (Reply in Chinese)**：默认使用中文与用户交流，保持专业与简洁。
+
+### 8. 走棋动画与残影高亮避坑：多屏状态同步与并发防触
+* **问题**：走棋时瞬间切换，对手不知道是哪个子移动的；如果通过弹出对决框停留来解决，居中的 Dialog 会遮挡棋盘；如果取消 Dialog 自动隐藏，又会引起交互阻塞。
+* **原因**：暗棋规则下，非交战的走棋必须对敌方保密身份。纯靠弹窗不足以解决“从哪里走到哪里”的轨迹认知问题。
+* **解决**：
+  1. **轨迹动画**：在 MainActivity 和 GamePresentation 中实现了严格同步的 400ms 平滑位移动画（基于 ViewPropertyAnimator）。
+  2. **状态防触锁**：由于动画耗时 400ms，必须全局加入 isAnimating 变量，在半空中强制忽略一切 onCellClicked 触摸，防止玩家狂点导致底层 oardState 与 UI 位置脱节。
+  3. **背景残影**：在 iew_board_cell.xml 底层添加了 #v_last_move_highlight (红框绿底)，配合 lastMoveFrom/lastMoveTo 全局状态。每次 UI 刷新时永久点亮上一回合的起止两个格子，不改变底层暗棋规则，也不遮挡弹窗，完美复刻国际象棋的“最后一步高亮”标准做法。
+  4. **BOM 编码阻断**：在 Windows PowerShell 中动态生成 XML 布局时，若使用默认的 [System.Text.Encoding]::UTF8 会带入 BOM (Byte Order Mark) 头，直接导致 Android 资源编译报 Cannot read field "elmName" because "root" is null 致命崩溃。必须强制使用 New-Object System.Text.UTF8Encoding $false 创建无 BOM 的 UTF-8 编码对象写入。
