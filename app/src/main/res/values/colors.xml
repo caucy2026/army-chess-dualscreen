@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 基础明亮现代主题背景 -->
-    <color name="bg_dark">#F8FAFC</color>
-    <color name="bg_panel">#FFFFFF</color>
-    <color name="border_color">#E2E8F0</color>
+    <!-- 高级沙盘/战术地图 背景 -->
+    <color name="bg_dark">#E8E6E1</color>
+    <color name="bg_panel">#F5F5F0</color>
+    <color name="border_color">#C1BDB5</color>
 
-    <!-- 玩家 A (主屏) 现代天蓝 -->
-    <color name="color_a">#0EA5E9</color>
-    <color name="color_a_glow">#BAE6FD</color>
-    <color name="color_a_bg">#E0F2FE</color>
+    <!-- 玩家 A: 普鲁士蓝 (深邃质感) -->
+    <color name="color_a">#1D4ED8</color>
+    <color name="color_a_glow">#60A5FA</color>
+    <color name="color_a_bg">#DBEAFE</color>
 
-    <!-- 玩家 B (副屏) 现代翠绿 -->
-    <color name="color_b">#10B981</color>
-    <color name="color_b_glow">#D1FAE5</color>
-    <color name="color_b_bg">#ECFDF5</color>
+    <!-- 玩家 B: 琥珀金/复古橙 -->
+    <color name="color_b">#D97706</color>
+    <color name="color_b_glow">#FBBF24</color>
+    <color name="color_b_bg">#FEF3C7</color>
 
-    <!-- 战力判定明丽红 -->
-    <color name="color_vs">#F43F5E</color>
+    <!-- 战力判定: 暗红质感 -->
+    <color name="color_vs">#BE123C</color>
 
-    <!-- 系统文字颜色 -->
-    <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#64748B</color>
+    <!-- 文字颜色 -->
+    <color name="text_primary">#292524</color>
+    <color name="text_secondary">#57534E</color>
 
     <!-- 棋盘网格特定颜色 -->
-    <color name="cell_station">#FFFFFF</color>
-    <color name="cell_railway">#94A3B8</color>
-    <color name="cell_camp">#F1F5F9</color>
-    <color name="cell_hq">#E2E8F0</color>
+    <color name="cell_station">#F8F7F4</color>
+    <color name="cell_railway">#8A8276</color>
+    <color name="cell_camp">#D6D3D1</color>
+    <color name="cell_hq">#A8A29E</color>
     
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
