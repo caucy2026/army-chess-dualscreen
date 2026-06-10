@@ -100,6 +100,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:textSize="12sp"
                     android:text="@string/auto_layout_btn_text"
                     android:backgroundTint="@color/cell_railway"
                     android:textColor="@color/white" />
@@ -108,16 +113,41 @@
                     android:id="@+id/btn_ready"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
+                    android:layout_weight="1.1"
+                    android:minWidth="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:textSize="12sp"
                     android:text="@string/ready_btn_text"
                     android:backgroundTint="@color/color_b"
                     android:textColor="@color/black" />
 
                 <Button
                     android:id="@+id/btn_reset"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:textSize="12sp"
                     android:text="@string/reset_btn_text"
+                    android:backgroundTint="@color/cell_hq"
+                    android:textColor="@color/text_secondary" />
+
+                <Button
+                    android:id="@+id/btn_change_bg"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:textSize="12sp"
+                    android:text="@string/change_bg_btn_text"
                     android:backgroundTint="@color/cell_hq"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>

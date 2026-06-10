@@ -11,6 +11,7 @@
 - **主题字体**: 全局采用开源的中文字体「站酷快乐体 (ZCOOL KuaiLe)」，文件位于 `app/src/main/res/font/zcool_kuaile.ttf`，在 `themes.xml` 中被设定为全局默认字体，营造欢快、休闲的游玩氛围。
 - **沉浸式全屏**: 在主屏与副屏的 `onCreate()` 中，通过 `WindowInsetsControllerCompat` 移除了状态栏与导航栏，实现了纯净的沉浸式全屏游戏体验。
 - **应用图标**: 采用精简扁平化（Flat Vector）的军事元素陆战棋图标（替换了 `mipmap` 目录下的图标），并将应用更名为“陆战棋”。
+- **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：无背景 → 沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空。场景图位于 `res/drawable-nodpi/bg_scene_1..4.png`，由根目录 `gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
 
 ## 3. 核心游戏状态与已知修复
 - **行军轨迹残留问题**: `MainActivity.kt` 内的 `lastMoveFrom` 和 `lastMoveTo` 负责记录并高亮上一回合的棋子移动轨迹。在每次游戏重置 (`initGameData()`) 时，必须确保将其清空为 `null`，否则上一局的残影会遗留在棋盘上（已修复）。

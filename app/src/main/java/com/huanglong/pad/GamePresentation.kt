@@ -97,6 +97,11 @@ class GamePresentation(
         binding.rvPieceTray.adapter = trayAdapter
     }
 
+    // 副屏背景场景循环：0 为无背景（默认极简灰），其余为四张场景图，与主屏 A 各自独立
+    private val bgScenes = intArrayOf(0, R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3, R.drawable.bg_scene_4)
+    private val bgSceneNames = arrayOf("无背景", "沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空")
+    private var bgSceneIndex = 0
+
     private fun setupListeners() {
         // 一键布阵
         binding.btnAutoLayout.setOnClickListener {
@@ -109,6 +114,13 @@ class GamePresentation(
         // 重置 (需双边确认)
         binding.btnReset.setOnClickListener {
             mainActivity.requestReset(Player.B)
+        }
+        // 更换背景（仅切换副屏 B 自己的背景，循环：无 -> 四种场景）
+        binding.btnChangeBg.setOnClickListener {
+            bgSceneIndex = (bgSceneIndex + 1) % bgScenes.size
+            val res = bgScenes[bgSceneIndex]
+            binding.root.setBackgroundResource(if (res == 0) R.drawable.app_window_bg else res)
+            showTip("背景：${bgSceneNames[bgSceneIndex]}")
         }
     }
 
