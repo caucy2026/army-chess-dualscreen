@@ -11,7 +11,7 @@
 - **主题字体**: 全局采用开源的中文字体「站酷快乐体 (ZCOOL KuaiLe)」，文件位于 `app/src/main/res/font/zcool_kuaile.ttf`，在 `themes.xml` 中被设定为全局默认字体，营造欢快、休闲的游玩氛围。由于副屏 (Presentation) 的独立 Window Context 默认不继承主屏 Theme 全局字体，因此已通过在棋子布局 (`view_board_cell.xml`)、战斗对决布局 (`dialog_battle.xml`、`presentation_game.xml`) 中显式指定 `android:fontFamily`，以及在主副屏托盘适配器 (`TrayAdapter`) 中通过代码动态应用 `ResourcesCompat.getFont`，来确保双屏所有棋子字体完全一致。
 - **沉浸式全屏**: 在主屏与副屏的 `onCreate()` 中，通过 `WindowInsetsControllerCompat` 移除了状态栏与导航栏，实现了纯净的沉浸式全屏游戏体验。
 - **应用图标**: 采用精简扁平化（Flat Vector）的军事元素陆战棋图标（替换了 `mipmap` 目录下的图标），并将应用更名为“陆战棋”。
-- **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空 → 春意江南 → 桃林春晓 → 樱花漫舞 → 幽谷兰香 → 山水田园（**已移除"无背景"档**）。**启动背景持久化**：用 SharedPreferences（文件 `game_prefs`，主屏 key `bg_index_a`、副屏 `bg_index_b`）保存上次所选背景；各屏 `applyInitialBackground()` 在 `onCreate` 读取并应用——有记录则恢复，无记录/读到无背景则随机选一张兜底，确保启动不再是极简灰。场景图位于 `res/drawable-nodpi/bg_scene_1..9.png`，由根目录 `gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
+- **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空 → 春意江南 → 桃林春晓 → 樱花漫舞 → 幽谷兰香 → 山水田园（**已移除"无背景"档**）。**启动背景持久化**：用 SharedPreferences（文件 `game_prefs`，主屏 key `bg_index_a`、副屏 `bg_index_b`）保存上次所选背景；各屏 `applyInitialBackground()` 在 `onCreate` 读取并应用——有记录则恢复，无记录/读到无背景则随机选一张兜底，确保启动不再是极简灰。场景图位于 `res/drawable-nodpi/bg_scene_1..9.png`，由 `scripts/gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
 - **棋子玉石陶瓷质感**: 棋子背景采用多层 `layer-list` 渲染，包含大范围弥散光晕、3D立座阴影、1dp菲涅尔边缘瓷釉描边、球面径向聚光和偏光高光，模拟温润逼真的陶瓷光影，统一采用白色系玉质瓷质背景。
   * **玩家 A (主屏)**: 冷白玉脂瓷 (`piece_a_bg.xml`)，配深天青蓝字 (`R.color.piece_text_a`)，选中时 (`piece_a_selected_bg.xml`) 散发冰蓝荧光。
   * **玩家 B (副屏)**: 暖白玉脂瓷 (`piece_b_bg.xml`)，配活力橙字 (`R.color.piece_text_b`)，选中时 (`piece_b_selected_bg.xml`) 散发翡翠绿/极光绿荧光。
@@ -30,7 +30,7 @@
   * **粤语 (3)**: A 玩家港风男声 `zh-HK-WanLungNeural`，B 玩家港风女声 `zh-HK-HiuMaanNeural` 朗读纯粤语魔性搞笑对决文案。
 - **动态音效切换与持久化**: 对弈阶段 (`GameStage.PLAYING`)，主屏 A 与副屏 B 会在“更换背景”后显现“更换音效”按钮，各自点击可独立循环切换己方播报音效，并通过 `SharedPreferences` 的 `voice_index_a` 和 `voice_index_b` 保存配置，启动时通过 `applyInitialVoice()` 自动读取。
 - **音频资源与对决关联**: 音频文件位于 `app/src/main/res/raw/tts_{result}_{dialect_index}_{voice_index}.mp3`，共 160 个。在 `MainActivity.moveOrAttack()` 发生碰子对决时，根据攻方当前的方言配置，通过 `SoundPool` 并发零延迟播放，并同步更新双屏对决弹窗文字。
-- **文案一致性**: 搞笑文案列表位于 `MainActivity.kt` 伴生对象中，必须与项目根目录 `generate_tts.py` 中的 `TEXT_DATA` 字典保持严格一致。修改后需重新运行 `python generate_tts.py` 生成对应音频。
+- **文案一致性**: 搞笑文案列表位于 `MainActivity.kt` 伴生对象中，必须与项目目录 `scripts/generate_tts.py` 中的 `TEXT_DATA` 字典保持严格一致。修改后需重新运行 `python scripts/generate_tts.py` 生成对应音频。
 
 ## 5. 构建与测试说明
 - 项目可以直接通过 Android Studio 点击 Run 运行。
