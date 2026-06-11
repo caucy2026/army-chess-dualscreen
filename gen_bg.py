@@ -126,6 +126,87 @@ def generate_ink_landscape(top_color, mountain_colors, sun_color, seed, draw_pet
     return im.convert("RGB")
 
 
+def generate_flower_scene(base_color, flower_colors, seed, is_cherry=True):
+    # base_color: RGBA 纸张底色
+    im = Image.new("RGBA", (W, H), base_color)
+    random.seed(seed)
+    
+    # 1. 绘制一些远景大片模糊的花丛 (Bokeh 散景效果)
+    bokeh_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    bd = ImageDraw.Draw(bokeh_layer, "RGBA")
+    
+    for _ in range(40):
+        # 倾向于在边缘和四个角放置，避免中间过浓
+        if random.random() < 0.75:
+            x = random.choice([random.randint(-60, 180), random.randint(W - 280, W + 60)])
+            y = random.choice([random.randint(-60, 150), random.randint(H - 220, H + 60)])
+        else:
+            x = random.randint(0, W)
+            y = random.randint(0, H)
+        r = random.randint(45, 100)
+        color = random.choice(flower_colors)
+        bd.ellipse([x - r, y - r, x + r, y + r], fill=(color[0], color[1], color[2], random.randint(15, 38)))
+        
+    bokeh_layer = bokeh_layer.filter(ImageFilter.GaussianBlur(28))
+    im = Image.alpha_composite(im, bokeh_layer)
+    
+    # 2. 绘制中景中等模糊的花簇，在边缘形成花枝的轮廓
+    mid_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    md = ImageDraw.Draw(mid_layer, "RGBA")
+    for _ in range(35):
+        x = random.choice([random.randint(-30, 220), random.randint(W - 300, W + 30)])
+        y = random.choice([random.randint(-30, 120), random.randint(H - 200, H + 30)])
+        r = random.randint(20, 50)
+        color = random.choice(flower_colors)
+        md.ellipse([x - r, y - r, x + r, y + r], fill=(color[0], color[1], color[2], random.randint(35, 75)))
+        
+    mid_layer = mid_layer.filter(ImageFilter.GaussianBlur(10))
+    im = Image.alpha_composite(im, mid_layer)
+    
+    # 3. 绘制较为清晰的花瓣和花朵点缀在中央和半空中（特效感）
+    detail_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dd = ImageDraw.Draw(detail_layer, "RGBA")
+    
+    # 飘落的花瓣 / 花朵小图标
+    for _ in range(50):
+        px = random.randint(0, W)
+        py = random.randint(0, H)
+        pw = random.randint(6, 12)
+        ph = random.randint(4, 8)
+        color = random.choice(flower_colors)
+        p_color = (color[0], color[1], color[2], random.randint(110, 175))
+        
+        # 绘制花瓣状的斜向多边形
+        dd.polygon([
+            (px, py),
+            (px + pw, py + ph // 2),
+            (px + pw // 2, py + ph),
+            (px - pw // 3, py + ph // 2)
+        ], fill=p_color)
+        
+    # 如果是兰花，我们可以在角落画几条优美纤细的绿萝藤蔓
+    if not is_cherry:
+        for _ in range(5):
+            start_x = random.randint(-15, 60)
+            start_y = random.randint(H - 60, H + 15)
+            ctrl_x = random.randint(90, 220)
+            ctrl_y = random.randint(H - 180, H - 90)
+            end_x = random.randint(160, 320)
+            end_y = random.randint(H - 90, H - 15)
+            points = []
+            for t in range(20):
+                t_val = t / 19.0
+                x = (1-t_val)**2 * start_x + 2*(1-t_val)*t_val * ctrl_x + t_val**2 * end_x
+                y = (1-t_val)**2 * start_y + 2*(1-t_val)*t_val * ctrl_y + t_val**2 * end_y
+                points.append((x, y))
+            dd.line(points, fill=(100, 155, 100, 110), width=2)
+            
+    detail_layer = detail_layer.filter(ImageFilter.GaussianBlur(1.2))
+    im = Image.alpha_composite(im, detail_layer)
+    
+    return im.convert("RGB")
+
+
 # 1. 沙漠迷彩
 save(blob_camo("#E6D9C0", ["#D9C7A3", "#CDB88E", "#C0A878", "#E0D2B4"], 42), "bg_scene_1")
 
@@ -159,7 +240,7 @@ for _ in range(6):
     d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=(255, 255, 255, 240))
 save(im, "bg_scene_4")
 
-# 5. 春意江南 (新绿山水)
+# 5. 春意江南 (新绿山水 - 去除太阳以防阻挡下棋)
 bg5 = generate_ink_landscape(
     (240, 246, 242, 255), 
     [
@@ -168,13 +249,13 @@ bg5 = generate_ink_landscape(
         (110, 162, 110, 235),
         (65, 122, 65, 255)
     ], 
-    (250, 215, 160, 120), 
+    None, 
     28,
     draw_petals=False
 )
 save(bg5, "bg_scene_5")
 
-# 6. 桃林春晓 (朝晖春色)
+# 6. 桃林春晓 (朝晖春色 - 去除太阳以防阻挡下棋)
 bg6 = generate_ink_landscape(
     (254, 250, 242, 255), 
     [
@@ -183,9 +264,37 @@ bg6 = generate_ink_landscape(
         (142, 168, 130, 230),
         (90, 128, 80, 255)
     ], 
-    (241, 148, 138, 140), 
+    None, 
     45,
     draw_petals=True
 )
 save(bg6, "bg_scene_6")
+
+# 7. 樱花漫舞 (浪漫樱粉鲜花特效)
+bg7 = generate_flower_scene(
+    (255, 244, 246, 255),
+    [
+        (255, 192, 203),
+        (255, 182, 193),
+        (244, 143, 177),
+        (255, 228, 225)
+    ],
+    77,
+    is_cherry=True
+)
+save(bg7, "bg_scene_7")
+
+# 8. 幽谷兰香 (清新紫萝鲜花特效)
+bg8 = generate_flower_scene(
+    (246, 245, 250, 255),
+    [
+        (216, 191, 216),
+        (221, 160, 221),
+        (186, 85, 211),
+        (147, 112, 219)
+    ],
+    88,
+    is_cherry=False
+)
+save(bg8, "bg_scene_8")
 
