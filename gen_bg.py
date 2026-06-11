@@ -207,6 +207,183 @@ def generate_flower_scene(base_color, flower_colors, seed, is_cherry=True):
     return im.convert("RGB")
 
 
+def generate_bridge_scene(base_color, mountain_colors, water_color, bridge_color, seed):
+    # base_color: RGBA 底色
+    im = Image.new("RGBA", (W, H), base_color)
+    d = ImageDraw.Draw(im, "RGBA")
+    random.seed(seed)
+    
+    # 1. 绘制三层模糊远山
+    y_bases = [250, 340, 430]
+    amplitudes = [80, 60, 40]
+    blur_radii = [6.0, 3.0, 1.2]
+    
+    for i in range(3):
+        layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ldraw = ImageDraw.Draw(layer, "RGBA")
+        draw_mountain(ldraw, W, H, y_bases[i], amplitudes[i], mountain_colors[i], seed + i * 23, num_points=30)
+        if blur_radii[i] > 0:
+            layer = layer.filter(ImageFilter.GaussianBlur(blur_radii[i]))
+        im = Image.alpha_composite(im, layer)
+        
+    # 2. 绘制中景江渚水面
+    water_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    wd = ImageDraw.Draw(water_layer, "RGBA")
+    # 绘制水波（几条大范围横向波浪线，半透明）
+    for i in range(4):
+        wy = 460 + i * 40
+        wpts = []
+        for x in range(0, W + 10, 20):
+            y = wy + math.sin(x * 0.05 + i * 1.5) * 6
+            wpts.append((x, y))
+        wd.line(wpts, fill=water_color, width=2)
+    water_layer = water_layer.filter(ImageFilter.GaussianBlur(1.5))
+    im = Image.alpha_composite(im, water_layer)
+    
+    # 3. 绘制石拱桥 (画在右侧，避开中央区域)
+    bridge_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    bd = ImageDraw.Draw(bridge_layer, "RGBA")
+    
+    bx, by = int(W * 0.72), 520
+    bw, bh = 140, 45
+    
+    # 桥身多边形
+    pts = []
+    pts.append((bx - bw//2, by))
+    for i in range(11):
+        angle = math.pi * (1.0 - i * 0.1)
+        tx = bx + int(math.cos(angle) * (bw * 0.35))
+        ty = by - int(math.sin(angle) * (bh * 0.55))
+        pts.append((tx, ty))
+    pts.append((bx + bw//2, by))
+    pts.append((bx + bw//2, by - bh))
+    pts.append((bx - bw//2, by - bh))
+    bd.polygon(pts, fill=bridge_color)
+    
+    # 镂空桥拱洞：填充背景色（略带不透明以制造水面反射）
+    bd.ellipse([bx - int(bw*0.3), by - int(bh*0.48), bx + int(bw*0.3), by + int(bh*0.5)], fill=(base_color[0], base_color[1], base_color[2], 255))
+    
+    # 桥洞水面倒影线
+    bd.line([(bx - int(bw*0.3), by), (bx + int(bw*0.3), by)], fill=water_color, width=2)
+    
+    bridge_layer = bridge_layer.filter(ImageFilter.GaussianBlur(0.8))
+    im = Image.alpha_composite(im, bridge_layer)
+    
+    # 4. 绘制桥畔的垂柳枝条
+    detail_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dd = ImageDraw.Draw(detail_layer, "RGBA")
+    
+    # 画3束低垂柳枝
+    for i in range(3):
+        lx = bx - 100 + i * 45
+        ly = by - 120 + random.randint(-10, 10)
+        length = random.randint(50, 95)
+        lpts = []
+        for j in range(12):
+            t = j / 11.0
+            x = lx + math.sin(j * 0.4) * 8 + j * 1.5
+            y = ly + j * (length / 11.0)
+            lpts.append((x, y))
+        dd.line(lpts, fill=(90, 155, 115, 160), width=2)
+        # 画柳叶点缀
+        for pt in lpts[4:]:
+            dd.ellipse([pt[0] - 2, pt[1] - 1, pt[0] + 2, pt[1] + 1], fill=(110, 185, 130, 200))
+            
+    # 5. 绘制几只飞燕
+    bird_color = (bridge_color[0], bridge_color[1], bridge_color[2], 180)
+    for _ in range(3):
+        bx_v = random.randint(int(W * 0.2), int(W * 0.5))
+        by_v = random.randint(int(H * 0.15), int(H * 0.35))
+        size = random.randint(5, 8)
+        dd.line([(bx_v - size, by_v - size // 2), (bx_v, by_v), (bx_v + size, by_v - size // 2)], fill=bird_color, width=1)
+        
+    detail_layer = detail_layer.filter(ImageFilter.GaussianBlur(0.6))
+    im = Image.alpha_composite(im, detail_layer)
+    
+    return im.convert("RGB")
+
+
+def generate_pastoral_scene(base_color, mountain_colors, field_colors, seed):
+    # base_color: RGBA 底色
+    im = Image.new("RGBA", (W, H), base_color)
+    d = ImageDraw.Draw(im, "RGBA")
+    random.seed(seed)
+    
+    # 1. 绘制两层模糊远山
+    y_bases = [260, 350]
+    amplitudes = [75, 55]
+    blur_radii = [5.5, 2.5]
+    
+    for i in range(2):
+        layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ldraw = ImageDraw.Draw(layer, "RGBA")
+        draw_mountain(ldraw, W, H, y_bases[i], amplitudes[i], mountain_colors[i], seed + i * 31, num_points=25)
+        if blur_radii[i] > 0:
+            layer = layer.filter(ImageFilter.GaussianBlur(blur_radii[i]))
+        im = Image.alpha_composite(im, layer)
+        
+    # 2. 绘制波浪起伏的层层梯田
+    field_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    fd = ImageDraw.Draw(field_layer, "RGBA")
+    
+    # 三层梯田
+    fy_bases = [440, 490, 550]
+    famplitudes = [25, 20, 15]
+    for i in range(3):
+        pts = []
+        pts.append((0, H))
+        num_pts = 15
+        random.seed(seed + i * 41)
+        # 田埂波线
+        for j in range(num_pts + 1):
+            x = (W * j) / num_pts
+            y = fy_bases[i] + math.sin(j * 0.4 + i * 1.2) * famplitudes[i] + random.uniform(-4, 4)
+            pts.append((x, y))
+        pts.append((W, H))
+        fd.polygon(pts, fill=field_colors[i])
+        
+        # 勾勒田埂亮线
+        wpts = pts[1:-1]
+        fd.line(wpts, fill=(255, 255, 255, 110), width=1)
+        
+    field_layer = field_layer.filter(ImageFilter.GaussianBlur(2.0))
+    im = Image.alpha_composite(im, field_layer)
+    
+    # 3. 绘制角落写意茅舍 (画在左下角，避开中间)
+    cottage_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    cd = ImageDraw.Draw(cottage_layer, "RGBA")
+    
+    cx, cy = int(W * 0.22), 530
+    cw, ch = 35, 22
+    # 茅屋墙面 (深灰褐)
+    cd.rectangle([cx - cw//2, cy - ch//2, cx + cw//2, cy + ch//2], fill=(100, 90, 80, 240))
+    # 茅草屋顶 (金草黄)
+    cd.polygon([(cx - cw//2 - 4, cy - ch//2), (cx + cw//2 + 4, cy - ch//2), (cx, cy - ch - 2)], fill=(210, 180, 120, 255))
+    
+    # 旁边再画个小树丛
+    cd.ellipse([cx + 30 - 15, cy - 20, cx + 30 + 15, cy + 10], fill=(70, 120, 85, 220))
+    cd.ellipse([cx + 42 - 12, cy - 30, cx + 42 + 12, cy - 6], fill=(90, 145, 105, 220))
+    
+    cottage_layer = cottage_layer.filter(ImageFilter.GaussianBlur(0.8))
+    im = Image.alpha_composite(im, cottage_layer)
+    
+    # 4. 绘制天空中飞燕
+    detail_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dd = ImageDraw.Draw(detail_layer, "RGBA")
+    random.seed(seed + 99)
+    bird_color = (60, 55, 50, 180)
+    for _ in range(4):
+        bx = random.randint(int(W * 0.45), int(W * 0.8))
+        by = random.randint(int(H * 0.18), int(H * 0.35))
+        size = random.randint(5, 8)
+        dd.line([(bx - size, by - size // 2), (bx, by), (bx + size, by - size // 2)], fill=bird_color, width=1)
+        
+    detail_layer = detail_layer.filter(ImageFilter.GaussianBlur(0.6))
+    im = Image.alpha_composite(im, detail_layer)
+    
+    return im.convert("RGB")
+
+
 # 1. 沙漠迷彩
 save(blob_camo("#E6D9C0", ["#D9C7A3", "#CDB88E", "#C0A878", "#E0D2B4"], 42), "bg_scene_1")
 
@@ -297,4 +474,35 @@ bg8 = generate_flower_scene(
     is_cherry=False
 )
 save(bg8, "bg_scene_8")
+
+# 9. 小桥流水 (江南春水意境)
+bg9 = generate_bridge_scene(
+    (234, 244, 242, 255),
+    [
+        (190, 215, 208, 160),
+        (145, 182, 172, 200),
+        (105, 145, 134, 230)
+    ],
+    (130, 175, 162, 120),
+    (100, 128, 120, 240),
+    58
+)
+save(bg9, "bg_scene_9")
+
+# 10. 山水田园 (金秋/春耕梯田田园)
+bg10 = generate_pastoral_scene(
+    (248, 245, 236, 255),
+    [
+        (210, 225, 200, 160),
+        (175, 198, 162, 210)
+    ],
+    [
+        (195, 215, 168, 190),
+        (232, 224, 176, 210),
+        (138, 175, 120, 240)
+    ],
+    72
+)
+save(bg10, "bg_scene_10")
+
 
