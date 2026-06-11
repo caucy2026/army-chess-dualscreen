@@ -11,7 +11,7 @@
 - **主题字体**: 全局采用开源的中文字体「站酷快乐体 (ZCOOL KuaiLe)」，文件位于 `app/src/main/res/font/zcool_kuaile.ttf`，在 `themes.xml` 中被设定为全局默认字体，营造欢快、休闲的游玩氛围。
 - **沉浸式全屏**: 在主屏与副屏的 `onCreate()` 中，通过 `WindowInsetsControllerCompat` 移除了状态栏与导航栏，实现了纯净的沉浸式全屏游戏体验。
 - **应用图标**: 采用精简扁平化（Flat Vector）的军事元素陆战棋图标（替换了 `mipmap` 目录下的图标），并将应用更名为“陆战棋”。
-- **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：无背景 → 沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空。场景图位于 `res/drawable-nodpi/bg_scene_1..4.png`，由根目录 `gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
+- **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空（**已移除"无背景"档**，按钮不再循环回极简灰）。**启动背景持久化**：用 SharedPreferences（文件 `game_prefs`，主屏 key `bg_index_a`、副屏 `bg_index_b`）保存上次所选背景；各屏 `applyInitialBackground()` 在 `onCreate` 读取并应用——有记录则恢复，无记录/读到无背景则随机选一张兜底，确保启动不再是极简灰。场景图位于 `res/drawable-nodpi/bg_scene_1..4.png`，由根目录 `gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
 
 ## 3. 核心游戏状态与已知修复
 - **行军轨迹残留问题**: `MainActivity.kt` 内的 `lastMoveFrom` 和 `lastMoveTo` 负责记录并高亮上一回合的棋子移动轨迹。在每次游戏重置 (`initGameData()`) 时，必须确保将其清空为 `null`，否则上一局的残影会遗留在棋盘上（已修复）。
@@ -25,3 +25,10 @@
 ## 5. 构建与测试说明
 - 项目可以直接通过 Android Studio 点击 Run 运行。
 - 如果通过命令行，请使用 Gradle 构建命令：`gradle assembleDebug`，随后使用 `adb install` 推送到双屏 Android 设备。
+
+## 6. 规则变体（房规，刻意偏离标准陆战棋）
+裁决与走法实现于 `game/GameEngine.kt` 与 `game/Models.kt`。以下两条为**有意采用的房规**，请勿当作 bug 改回标准规则：
+- **碰地雷同归于尽**: 除工兵外，任何棋子碰地雷均与地雷同归于尽（标准规则是"踩雷阵亡、地雷保留"）。实现于 `GameEngine.resolveBattle()` 的地雷分支返回 `BOTH_DIED`；工兵挖雷仍是工兵活、雷亡，炸弹碰雷亦同归。
+- **大本营棋子可移动**: 进入大本营的非军旗棋子可正常移出（标准规则是"进入大本营即锁定守家死子"）。已移除 `GameEngine.isValidMove()` 中的 `if (isHq(from)) return false` 锁定判断；军旗本身仍因属 `FLAG` 类型不可移动。大本营无斜线连接，故只能正交直进直出。
+- **仍保持标准的部分**: 地雷仅能布在己方后两排（含非军旗占据的那个大本营，属标准合法雷位）；夺旗即终局；行营避难不可被吃。
+- **一键布阵生成器（`MainActivity.autoLayout`）**: 50% 取预设阵型（`getClassicFormations`，三套阵型按真实棋盘可用行 5/3/4/3/5/5 书写、所见即所得），50% 取受约束随机生成器（`randomTypeLayout`：军旗随机入大本营、地雷撒后两排、炸弹避前两排、其余随机）；镜像是真·列翻转 `c→4-c`（行营/大本营左右对称故必合法）；生成后用 `verifyLayout` + `hasForbiddenTrappedPiece` 兜底重试。**困死房规**：允许出现困死子，但困死子只能是营长及以下（营长/连长/排长）；工兵、炸弹、以及高于营长的高阶子（团长~司令）不得被己方地雷/军旗围死，详见 `GameEngine.isTrapSensitive`。

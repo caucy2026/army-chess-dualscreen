@@ -99,9 +99,6 @@ object GameEngine {
         // 地雷和军旗不能动
         if (piece.type == PieceType.LANDMINE || piece.type == PieceType.FLAG) return false
 
-        // 进入大本营的棋子不能再移动（守家死子）
-        if (isHq(from)) return false
-
         // 终点是己方棋子，不能走（不能踩自己人）
         val targetPiece = board[to]
         if (targetPiece != null && targetPiece.owner == currentPlayer) return false
@@ -274,8 +271,8 @@ object GameEngine {
                 // 工兵排雷，工兵活
                 BattleResult.ATTACKER_WON
             } else {
-                // 标准规则：其他子踩雷阵亡，地雷保留（仅工兵能挖雷、炸弹能同归）
-                BattleResult.DEFENDER_WON
+                // 房规·趟雷开路：除工兵外，其他子碰雷与地雷同归于尽
+                BattleResult.BOTH_DIED
             }
         }
 
@@ -300,6 +297,45 @@ object GameEngine {
             }
         }
         return false
+    }
+
+    /**
+     * 困死合法性检测：返回 true 表示存在"不容被困死"的活动子被彻底围死，布阵需重排。
+     * 房规：允许出现困死子，但困死子只能是营长及以下的普通战斗子（营长/连长/排长）；
+     * 工兵、炸弹、以及高于营长的高阶子（团长~司令）一旦被己方地雷/军旗围死即属浪费，须避免。
+     * 判定"困死"的思路：把棋盘抽象为只剩不可移动子(地雷/军旗)充当永久障碍，其余格视为终将腾空；
+     * 若该子对任意目标格都无合法走法，即为困死。
+     */
+    fun hasForbiddenTrappedPiece(board: Map<Position, ChessPiece>, player: Player): Boolean {
+        for ((pos, piece) in board) {
+            if (piece.owner != player) continue
+            if (!isTrapSensitive(piece.type)) continue
+            if (isPieceTrapped(pos, board, player)) return true
+        }
+        return false
+    }
+
+    /** 是否为"不容被困死"的贵重子：工兵、炸弹、或战力高于营长者。地雷/军旗本就不动，不在此列。 */
+    private fun isTrapSensitive(type: PieceType): Boolean {
+        if (type == PieceType.LANDMINE || type == PieceType.FLAG) return false
+        return type == PieceType.ENGINEER ||
+            type == PieceType.BOMB ||
+            type.power > PieceType.BATTALION_COMMANDER.power
+    }
+
+    private fun isPieceTrapped(from: Position, board: Map<Position, ChessPiece>, player: Player): Boolean {
+        // 永久障碍：仅保留地雷与军旗；再把待检测子放回原位
+        val obstacles = HashMap<Position, ChessPiece>()
+        for ((p, pc) in board) {
+            if (pc.type == PieceType.LANDMINE || pc.type == PieceType.FLAG) obstacles[p] = pc
+        }
+        obstacles[from] = board[from] ?: return true
+        for (r in 0 until ROWS) {
+            for (c in 0 until COLS) {
+                if (isValidMove(from, Position(r, c), obstacles, player)) return false
+            }
+        }
+        return true
     }
 
     /**

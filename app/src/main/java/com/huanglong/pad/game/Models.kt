@@ -14,7 +14,7 @@ enum class Player {
 enum class CellType {
     STATION, // 普通兵站
     CAMP,    // 行营 (避难所，不可吃子，只能放一个子)
-    HQ,      // 大本营 (司令部，军旗防守区，进入后锁定不能再动)
+    HQ,      // 大本营 (司令部，军旗防守区；非军旗棋子可正常进出，不锁定)
     RIVER    // 界河 (排 5 与 6 之间)
 }
 
@@ -31,7 +31,7 @@ enum class PieceType(val displayName: String, val power: Int, val count: Int) {
     COMPANY_COMMANDER("连长", 3, 3),
     PLATOON_COMMANDER("排长", 2, 3),
     ENGINEER("工兵", 1, 3),   // 战力最低，但唯一能排雷，并在铁路上拐弯走子
-    LANDMINE("地雷", 0, 3),   // 战力为0，不能移动；工兵挖雷活、雷死；炸弹碰雷同归；其他子碰雷阵亡、雷保留
+    LANDMINE("地雷", 0, 3),   // 战力为0，不能移动；工兵挖雷活、雷死；其余棋子（含炸弹）碰雷同归于尽
     BOMB("炸弹", 0, 2),       // 战力为0，移动后与任何相碰的子同归于尽
     FLAG("军旗", 0, 1)        // 战力为0，不能移动，被吃则全盘皆输
 }

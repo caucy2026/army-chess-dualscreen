@@ -49,6 +49,7 @@ class GamePresentation(
         initBoardGrid()
         initTrayRecyclerView()
         setupListeners()
+        applyInitialBackground()
         refreshUI()
     }
 
@@ -97,10 +98,20 @@ class GamePresentation(
         binding.rvPieceTray.adapter = trayAdapter
     }
 
-    // 副屏背景场景循环：0 为无背景（默认极简灰），其余为四张场景图，与主屏 A 各自独立
-    private val bgScenes = intArrayOf(0, R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3, R.drawable.bg_scene_4)
-    private val bgSceneNames = arrayOf("无背景", "沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空")
-    private var bgSceneIndex = 0
+    // 副屏背景场景循环：四张场景图轮播（已移除"无背景"档），与主屏 A 各自独立。
+    // 启动恢复上次保存的背景；若无记录/读到无背景则随机选一张兜底。
+    private val bgScenes = intArrayOf(R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3, R.drawable.bg_scene_4)
+    private val bgSceneNames = arrayOf("沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空")
+    private val bgPrefs by lazy { context.getSharedPreferences("game_prefs", Context.MODE_PRIVATE) }
+    private var bgSceneIndex = -1
+
+    /** 启动副屏初始背景：优先用上次保存的索引；无效(无记录/无背景)则随机一张兜底，并写回保存使之固定。 */
+    private fun applyInitialBackground() {
+        val saved = bgPrefs.getInt("bg_index_b", -1)
+        bgSceneIndex = if (saved in bgScenes.indices) saved else bgScenes.indices.random()
+        binding.root.setBackgroundResource(bgScenes[bgSceneIndex])
+        bgPrefs.edit().putInt("bg_index_b", bgSceneIndex).apply()
+    }
 
     private fun setupListeners() {
         // 一键布阵
@@ -115,11 +126,11 @@ class GamePresentation(
         binding.btnReset.setOnClickListener {
             mainActivity.requestReset(Player.B)
         }
-        // 更换背景（仅切换副屏 B 自己的背景，循环：无 -> 四种场景）
+        // 更换背景（仅切换副屏 B 自己的背景，循环四种场景；并持久化以便下次启动恢复）
         binding.btnChangeBg.setOnClickListener {
             bgSceneIndex = (bgSceneIndex + 1) % bgScenes.size
-            val res = bgScenes[bgSceneIndex]
-            binding.root.setBackgroundResource(if (res == 0) R.drawable.app_window_bg else res)
+            binding.root.setBackgroundResource(bgScenes[bgSceneIndex])
+            bgPrefs.edit().putInt("bg_index_b", bgSceneIndex).apply()
             showTip("背景：${bgSceneNames[bgSceneIndex]}")
         }
     }

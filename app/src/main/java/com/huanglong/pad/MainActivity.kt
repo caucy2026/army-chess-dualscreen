@@ -136,6 +136,7 @@ class MainActivity : AppCompatActivity() {
         initBoardGrid()
         initTrayRecyclerView()
         setupListeners()
+        applyInitialBackground()
         refreshUI()
     }
 
@@ -248,10 +249,20 @@ class MainActivity : AppCompatActivity() {
         binding.rvPieceTray.adapter = trayAdapter
     }
 
-    // 主屏背景场景循环：0 为无背景（默认极简灰），其余为四张场景图
-    private val bgScenes = intArrayOf(0, R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3, R.drawable.bg_scene_4)
-    private val bgSceneNames = arrayOf("无背景", "沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空")
-    private var bgSceneIndex = 0
+    // 主屏背景场景循环：四张场景图轮播（已移除"无背景"档）。
+    // 启动恢复上次保存的背景；若无记录/读到无背景则随机选一张兜底，主副屏各自独立持久化。
+    private val bgScenes = intArrayOf(R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3, R.drawable.bg_scene_4)
+    private val bgSceneNames = arrayOf("沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空")
+    private val bgPrefs by lazy { getSharedPreferences("game_prefs", Context.MODE_PRIVATE) }
+    private var bgSceneIndex = -1
+
+    /** 启动主屏初始背景：优先用上次保存的索引；无效(无记录/无背景)则随机一张兜底，并写回保存使之固定。 */
+    private fun applyInitialBackground() {
+        val saved = bgPrefs.getInt("bg_index_a", -1)
+        bgSceneIndex = if (saved in bgScenes.indices) saved else bgScenes.indices.random()
+        binding.mainRoot.setBackgroundResource(bgScenes[bgSceneIndex])
+        bgPrefs.edit().putInt("bg_index_a", bgSceneIndex).apply()
+    }
 
     private fun setupListeners() {
         // 一键布防
@@ -266,11 +277,11 @@ class MainActivity : AppCompatActivity() {
         binding.btnReset.setOnClickListener {
             requestReset(Player.A)
         }
-        // 更换背景（仅切换主屏 A 自己的背景，循环：无 -> 四种场景）
+        // 更换背景（仅切换主屏 A 自己的背景，循环四种场景；并持久化以便下次启动恢复）
         binding.btnChangeBg.setOnClickListener {
             bgSceneIndex = (bgSceneIndex + 1) % bgScenes.size
-            val res = bgScenes[bgSceneIndex]
-            binding.mainRoot.setBackgroundResource(if (res == 0) R.drawable.app_window_bg else res)
+            binding.mainRoot.setBackgroundResource(bgScenes[bgSceneIndex])
+            bgPrefs.edit().putInt("bg_index_a", bgSceneIndex).apply()
             showToast("背景：${bgSceneNames[bgSceneIndex]}", Player.A)
         }
     }
@@ -802,36 +813,38 @@ class MainActivity : AppCompatActivity() {
 
         val formations = mutableListOf<Pair<String, List<PieceType>>>()
         
-        // 乌龟阵 (重防守)
+        // 阵型按"填充顺序"书写，每行对应棋盘真实可用行（行营已挖空），列数依次 5/3/4/3/5/5：
+        // row6 前锋 c0~c4 │ row7 c0,c2,c4 │ row8 c0,c1,c3,c4 │ row9 c0,c2,c4 │ row10 c0~c4 │ row11 底线/大本营 c0~c4
+        // 乌龟阵 (重防守)：前锋低阶子，司令回防 row7 边角
         val turtle = listOf(
-            PLATOON, COMPANY, ENGINEER, PLATOON, COMPANY,
-            COMMANDER, REGIMENT, BRIGADE, ENGINEER, PLATOON,
-            BOMB,    DIVISION, BATTALION,
-            REGIMENT, CORPS, ENGINEER, BOMB,
-            DIVISION, LANDMINE, LANDMINE,
-            BATTALION, COMPANY, LANDMINE, FLAG, BRIGADE
+            PLATOON, COMPANY, ENGINEER, PLATOON, COMPANY,     // row6
+            COMMANDER, REGIMENT, BRIGADE,                     // row7
+            ENGINEER, PLATOON, BOMB, DIVISION,                // row8
+            BATTALION, REGIMENT, CORPS,                       // row9
+            ENGINEER, BOMB, DIVISION, LANDMINE, LANDMINE,     // row10
+            BATTALION, COMPANY, LANDMINE, FLAG, BRIGADE       // row11
         )
         formations.add(Pair("乌龟阵 (重防)", turtle))
         
-        // 飞花阵 (重进攻) - 司令居中，第一排无军长师长
+        // 飞花阵 (重进攻)：司令压前锋正中 (6,2)，攻击性强但司令暴露
         val blitz = listOf(
-            COMPANY, PLATOON, COMMANDER, PLATOON, COMPANY,
-            ENGINEER, REGIMENT, DIVISION, REGIMENT, BRIGADE,
-            BOMB, DIVISION, BOMB,
-            ENGINEER, CORPS, BATTALION, COMPANY,
-            ENGINEER, LANDMINE, LANDMINE,
-            BRIGADE, FLAG, LANDMINE, PLATOON, BATTALION
+            COMPANY, PLATOON, COMMANDER, PLATOON, COMPANY,    // row6
+            ENGINEER, REGIMENT, DIVISION,                     // row7
+            REGIMENT, BRIGADE, BOMB, DIVISION,                // row8
+            BOMB, ENGINEER, CORPS,                            // row9
+            BATTALION, COMPANY, ENGINEER, LANDMINE, LANDMINE, // row10
+            BRIGADE, FLAG, LANDMINE, PLATOON, BATTALION       // row11
         )
         formations.add(Pair("飞花阵 (重攻)", blitz))
         
-        // 均衡阵 (攻守兼备) - 司令在第一排两边，第一排无军长师长
+        // 均衡阵 (攻守兼备)：司令压前锋角 (6,0)
         val balance = listOf(
-            COMMANDER, COMPANY, ENGINEER, PLATOON, COMPANY,
-            DIVISION, PLATOON, ENGINEER, BRIGADE, REGIMENT,
-            BOMB, CORPS, COMPANY,
-            BRIGADE, ENGINEER, DIVISION, BOMB,
-            BATTALION, LANDMINE, LANDMINE,
-            BATTALION, PLATOON, LANDMINE, FLAG, REGIMENT
+            COMMANDER, COMPANY, ENGINEER, PLATOON, COMPANY,   // row6
+            DIVISION, PLATOON, ENGINEER,                      // row7
+            BRIGADE, REGIMENT, BOMB, CORPS,                   // row8
+            COMPANY, BRIGADE, ENGINEER,                       // row9
+            DIVISION, BOMB, BATTALION, LANDMINE, LANDMINE,    // row10
+            BATTALION, PLATOON, LANDMINE, FLAG, REGIMENT      // row11
         )
         formations.add(Pair("均衡阵 (攻守兼备)", balance))
 
@@ -854,58 +867,97 @@ class MainActivity : AppCompatActivity() {
         }
 
         val myPieces = if (player == Player.A) trayPiecesA else trayPiecesB
-        val piecesMap = HashMap<Position, ChessPiece>()
 
-        // 2. 划分所有待部署的 25 个物理格
+        // 2. 划分所有待部署的 25 个物理格（行优先：前锋排→底线，底线含两个大本营；跳过行营）
         val availablePositions = ArrayList<Position>()
-        if (player == Player.A) {
-            for (r in 6..11) { // 6 是前锋界河边，11 是底线
-                for (c in 0 until GameEngine.COLS) {
-                    val pos = Position(r, c)
-                    if (!GameEngine.isCamp(pos)) availablePositions.add(pos)
-                }
-            }
-        } else {
-            for (r in 5 downTo 0) { // 5 是前锋界河边，0 是底线
-                for (c in 0 until GameEngine.COLS) {
-                    val pos = Position(r, c)
-                    if (!GameEngine.isCamp(pos)) availablePositions.add(pos)
-                }
+        val rowOrder = if (player == Player.A) (6..11).toList() else (5 downTo 0).toList()
+        for (r in rowOrder) {
+            for (c in 0 until GameEngine.COLS) {
+                val pos = Position(r, c)
+                if (!GameEngine.isCamp(pos)) availablePositions.add(pos)
             }
         }
 
-        // 3. 获取阵法并部署
-        val classicFormations = getClassicFormations()
-        val chosen = classicFormations.random()
-        val formationName = chosen.first
-        var typesLayout = chosen.second
+        // 3. 反复生成布局方案，直到通过合法性 + 困死兜底校验（贵重子不得被困死）
+        var typeLayout: Map<Position, PieceType>
+        var formationName: String
+        var attempts = 0
+        do {
+            val plan = if (Math.random() < 0.5) {
+                curatedTypeLayout(availablePositions)
+            } else {
+                randomTypeLayout(availablePositions, player)
+            }
+            typeLayout = plan.first
+            formationName = plan.second
+            attempts++
+            val probe = typeLayout.mapValues { ChessPiece("probe", it.value, player) }
+            if (GameEngine.verifyLayout(probe, player) && !GameEngine.hasForbiddenTrappedPiece(probe, player)) break
+        } while (attempts < 200)
 
-        // 50% 概率左右镜像翻转
-        if (Math.random() > 0.5) {
-            val row0 = typesLayout.subList(0, 5).reversed()
-            val row1 = typesLayout.subList(5, 10).reversed()
-            val row2 = typesLayout.subList(10, 13).reversed()
-            val row3 = typesLayout.subList(13, 17).reversed()
-            val row4 = typesLayout.subList(17, 20).reversed()
-            val row5 = typesLayout.subList(20, 25).reversed()
-            typesLayout = row0 + row1 + row2 + row3 + row4 + row5
+        // 4. 用托盘中的真实棋子实例填充方案
+        val piecesMap = HashMap<Position, ChessPiece>()
+        val pool = myPieces.toMutableList()
+        for ((pos, type) in typeLayout) {
+            val piece = pool.first { it.type == type }
+            piecesMap[pos] = piece
+            pool.remove(piece)
         }
 
-        // 4. 将预设的棋子类型与玩家托盘中的真实棋子实例匹配填充
-        for (i in 0 until 25) {
-            val type = typesLayout[i]
-            val piece = myPieces.first { it.type == type }
-            piecesMap[availablePositions[i]] = piece
-            myPieces.remove(piece)
-        }
-
-        // 5. 将布局同步到全局 BoardState
+        // 5. 同步到全局 BoardState
         boardState.putAll(piecesMap)
         if (player == Player.A) trayPiecesA.clear() else trayPiecesB.clear()
 
         refreshUI()
         val playerStr = if (player == Player.A) "玩家 A" else "玩家 B"
         showToast("$playerStr 启用阵法：$formationName", player)
+    }
+
+    /** 取一套预设阵型，50% 概率按列做真实镜像翻转 (c→4-c)，返回「位置→兵种」方案。 */
+    private fun curatedTypeLayout(availablePositions: List<Position>): Pair<Map<Position, PieceType>, String> {
+        val (name, types) = getClassicFormations().random()
+        var layout = availablePositions.indices.associate { availablePositions[it] to types[it] }
+        if (Math.random() < 0.5) {
+            // 行营/大本营均左右对称，列翻转后仍合法，且是真正的左右镜像
+            layout = layout.mapKeys { Position(it.key.row, GameEngine.COLS - 1 - it.key.col) }
+        }
+        return layout to name
+    }
+
+    /** 受约束随机布阵：军旗随机入一个大本营、地雷撒后两排、炸弹避开前两排、其余活动子随机散布。 */
+    private fun randomTypeLayout(availablePositions: List<Position>, player: Player): Pair<Map<Position, PieceType>, String> {
+        val remaining = availablePositions.toMutableList()
+        val layout = HashMap<Position, PieceType>()
+
+        // 军旗 → 随机一个大本营
+        val flagPos = remaining.filter { GameEngine.isHq(it) }.random()
+        layout[flagPos] = PieceType.FLAG
+        remaining.remove(flagPos)
+
+        // 地雷 ×3 → 后两排
+        val mineRows = if (player == Player.A) 10..11 else 0..1
+        for (p in remaining.filter { it.row in mineRows }.shuffled().take(3)) {
+            layout[p] = PieceType.LANDMINE
+            remaining.remove(p)
+        }
+
+        // 炸弹 ×2 → 不在前两排
+        val firstTwoRows = if (player == Player.A) 6..7 else 4..5
+        for (p in remaining.filter { it.row !in firstTwoRows }.shuffled().take(2)) {
+            layout[p] = PieceType.BOMB
+            remaining.remove(p)
+        }
+
+        // 其余 19 个活动子（兵种含正确数量）随机散布
+        val movable = mutableListOf<PieceType>()
+        for (t in PieceType.values()) {
+            if (t == PieceType.FLAG || t == PieceType.LANDMINE || t == PieceType.BOMB) continue
+            repeat(t.count) { movable.add(t) }
+        }
+        remaining.shuffle()
+        for (i in movable.indices) layout[remaining[i]] = movable[i]
+
+        return layout to "随机阵"
     }
 
     /**

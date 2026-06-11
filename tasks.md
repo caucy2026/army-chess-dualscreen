@@ -1,8 +1,7 @@
-# 陆战棋优化：多套语音、重命名与新图标
+# 一键布阵优化任务
 
-- [x] 修改应用名称 (strings.xml) 为更具辨识度的名字
-- [x] 生成新的应用图标 (ic_launcher) 并替换现有图标
-- [x] 设计攻防胜负等多套搞笑文案（胜/负各10种，同归于尽/夺旗各10种）
-- [x] 编写并运行 Python 脚本，利用 edge-tts 批量生成语音 MP3 到 `res/raw` 目录
-- [x] 修改音效播放逻辑（SoundPool），支持从多个资源中随机选取播放并匹配文案
-- [x] 编译验证修改并提交代码
+- [x] GameEngine 增加困死检测 hasForbiddenTrappedPiece/isPieceTrapped（仅拦截贵重子被困死）
+- [x] MainActivity 阵型定义按真实棋盘行 [5,3,4,3,5,5] 重排并加注释（行为不变，提升可读性）
+- [x] MainActivity autoLayout 镜像改为按列翻转真实坐标 c→4-c（真·左右镜像，保证合法）
+- [x] MainActivity 增加受约束随机布阵生成器 randomTypeLayout + 合法性/困死兜底重试
+- [x] gradle assembleDebug 构建验证通过
