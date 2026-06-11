@@ -815,36 +815,37 @@ class MainActivity : AppCompatActivity() {
         
         // 阵型按"填充顺序"书写，每行对应棋盘真实可用行（行营已挖空），列数依次 5/3/4/3/5/5：
         // row6 前锋 c0~c4 │ row7 c0,c2,c4 │ row8 c0,c1,c3,c4 │ row9 c0,c2,c4 │ row10 c0~c4 │ row11 底线/大本营 c0~c4
-        // 乌龟阵 (重防守)：前锋低阶子，司令回防 row7 边角
-        val turtle = listOf(
-            PLATOON, COMPANY, ENGINEER, PLATOON, COMPANY,     // row6
-            COMMANDER, REGIMENT, BRIGADE,                     // row7
-            ENGINEER, PLATOON, BOMB, DIVISION,                // row8
-            BATTALION, REGIMENT, CORPS,                       // row9
-            ENGINEER, BOMB, DIVISION, LANDMINE, LANDMINE,     // row10
-            BATTALION, COMPANY, LANDMINE, FLAG, BRIGADE       // row11
+        // 战术约束（预设与随机一致）：司令压最前两排(row6-7)；旅/师/军长禁第一排(row6)。
+        // 铁壁阵 (重防)：司令回防 row7 中路，旅/师/军长集结中后排织成铁壁
+        val ironwall = listOf(
+            COMPANY, PLATOON, ENGINEER, PLATOON, COMPANY,     // row6
+            REGIMENT, COMMANDER, REGIMENT,                    // row7
+            BRIGADE, BOMB, BOMB, BRIGADE,                     // row8
+            DIVISION, CORPS, DIVISION,                        // row9
+            COMPANY, BATTALION, ENGINEER, LANDMINE, LANDMINE, // row10
+            PLATOON, FLAG, LANDMINE, ENGINEER, BATTALION      // row11
         )
-        formations.add(Pair("乌龟阵 (重防)", turtle))
+        formations.add(Pair("铁壁阵 (重防)", ironwall))
         
-        // 飞花阵 (重进攻)：司令压前锋正中 (6,2)，攻击性强但司令暴露
+        // 飞花阵 (重攻)：司令压前锋正中 (6,2) 当敢死队，师/旅长跟进二线
         val blitz = listOf(
             COMPANY, PLATOON, COMMANDER, PLATOON, COMPANY,    // row6
-            ENGINEER, REGIMENT, DIVISION,                     // row7
-            REGIMENT, BRIGADE, BOMB, DIVISION,                // row8
-            BOMB, ENGINEER, CORPS,                            // row9
-            BATTALION, COMPANY, ENGINEER, LANDMINE, LANDMINE, // row10
-            BRIGADE, FLAG, LANDMINE, PLATOON, BATTALION       // row11
+            ENGINEER, REGIMENT, ENGINEER,                     // row7
+            DIVISION, BOMB, BOMB, DIVISION,                   // row8
+            BRIGADE, CORPS, BRIGADE,                          // row9
+            REGIMENT, COMPANY, ENGINEER, LANDMINE, LANDMINE,  // row10
+            BATTALION, FLAG, LANDMINE, PLATOON, BATTALION     // row11
         )
         formations.add(Pair("飞花阵 (重攻)", blitz))
         
-        // 均衡阵 (攻守兼备)：司令压前锋角 (6,0)
+        // 均衡阵 (攻守兼备)：司令 row7 角领衔，高阶子前后分散
         val balance = listOf(
-            COMMANDER, COMPANY, ENGINEER, PLATOON, COMPANY,   // row6
-            DIVISION, PLATOON, ENGINEER,                      // row7
-            BRIGADE, REGIMENT, BOMB, CORPS,                   // row8
-            COMPANY, BRIGADE, ENGINEER,                       // row9
-            DIVISION, BOMB, BATTALION, LANDMINE, LANDMINE,    // row10
-            BATTALION, PLATOON, LANDMINE, FLAG, REGIMENT      // row11
+            ENGINEER, COMPANY, PLATOON, COMPANY, ENGINEER,    // row6
+            COMMANDER, REGIMENT, BRIGADE,                     // row7
+            DIVISION, BOMB, BOMB, REGIMENT,                   // row8
+            BRIGADE, CORPS, DIVISION,                         // row9
+            COMPANY, BATTALION, PLATOON, LANDMINE, LANDMINE,  // row10
+            ENGINEER, BATTALION, LANDMINE, FLAG, PLATOON      // row11
         )
         formations.add(Pair("均衡阵 (攻守兼备)", balance))
 
@@ -852,11 +853,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 一键布防 (Auto Layout) 合法配置
+     * 一键布防 (Auto Layout) 入口：按该玩家已布子数分三种行为。
+     * - 1..24（部分布防）：保留已布子，只把托盘剩余子合法填入空位（增量布防）。
+     * - 0 或 25（空盘/满盘）：整盘收回托盘后重新洗牌生成（满盘即"再点一次换阵"）。
      */
     fun autoLayout(player: Player) {
         if (gameStage != GameStage.LAYOUT) return
+        val onBoard = boardState.count { it.value.owner == player }
+        if (onBoard in 1..24) incrementalLayout(player) else fullAutoLayout(player)
+    }
 
+    /** 整盘布阵：先收回该玩家全部子，再 50% 预设 / 50% 随机生成并校验。 */
+    private fun fullAutoLayout(player: Player) {
         // 1. 清理已有布防，重新收回托盘
         val keysToRemove = boardState.filter { it.value.owner == player }.keys.toList()
         for (k in keysToRemove) {
@@ -865,35 +873,35 @@ class MainActivity : AppCompatActivity() {
                 if (player == Player.A) trayPiecesA.add(p) else trayPiecesB.add(p)
             }
         }
-
         val myPieces = if (player == Player.A) trayPiecesA else trayPiecesB
 
-        // 2. 划分所有待部署的 25 个物理格（行优先：前锋排→底线，底线含两个大本营；跳过行营）
-        val availablePositions = ArrayList<Position>()
-        val rowOrder = if (player == Player.A) (6..11).toList() else (5 downTo 0).toList()
-        for (r in rowOrder) {
-            for (c in 0 until GameEngine.COLS) {
-                val pos = Position(r, c)
-                if (!GameEngine.isCamp(pos)) availablePositions.add(pos)
+        // 2. 25 个待部署物理格（行优先：前锋排→底线，底线含两个大本营；跳过行营）
+        val availablePositions = collectAvailablePositions(player) { true }
+
+        // 3. 反复生成，直到通过 合法性 + 战术约束 + 困死 校验
+        var typeLayout: Map<Position, PieceType> = emptyMap()
+        var formationName = "随机阵"
+        var attempts = 0
+        while (attempts < 200) {
+            attempts++
+            val plan = if (Math.random() < 0.5) curatedTypeLayout(availablePositions)
+                       else randomTypeLayout(availablePositions, player) ?: continue
+            val probe = plan.first.mapValues { ChessPiece("probe", it.value, player) }
+            if (GameEngine.verifyLayout(probe, player) &&
+                GameEngine.satisfiesAutoConstraints(probe, player) &&
+                !GameEngine.hasForbiddenTrappedPiece(probe, player)) {
+                typeLayout = plan.first
+                formationName = plan.second
+                break
             }
         }
 
-        // 3. 反复生成布局方案，直到通过合法性 + 困死兜底校验（贵重子不得被困死）
-        var typeLayout: Map<Position, PieceType>
-        var formationName: String
-        var attempts = 0
-        do {
-            val plan = if (Math.random() < 0.5) {
-                curatedTypeLayout(availablePositions)
-            } else {
-                randomTypeLayout(availablePositions, player)
-            }
-            typeLayout = plan.first
-            formationName = plan.second
-            attempts++
-            val probe = typeLayout.mapValues { ChessPiece("probe", it.value, player) }
-            if (GameEngine.verifyLayout(probe, player) && !GameEngine.hasForbiddenTrappedPiece(probe, player)) break
-        } while (attempts < 200)
+        val playerStr = if (player == Player.A) "玩家 A" else "玩家 B"
+        if (typeLayout.isEmpty()) {
+            showToast("$playerStr：自动布阵生成失败，请重试", player)
+            refreshUI()
+            return
+        }
 
         // 4. 用托盘中的真实棋子实例填充方案
         val piecesMap = HashMap<Position, ChessPiece>()
@@ -909,8 +917,61 @@ class MainActivity : AppCompatActivity() {
         if (player == Player.A) trayPiecesA.clear() else trayPiecesB.clear()
 
         refreshUI()
-        val playerStr = if (player == Player.A) "玩家 A" else "玩家 B"
         showToast("$playerStr 启用阵法：$formationName", player)
+    }
+
+    /** 增量布阵：保留已布子，只把托盘里剩余子合法填入空位；无解则提示并保持原状。 */
+    private fun incrementalLayout(player: Player) {
+        val tray = if (player == Player.A) trayPiecesA else trayPiecesB
+        val occupied = boardState.keys.toSet()
+        val freePositions = collectAvailablePositions(player) { it !in occupied }
+        val remainingTypes = tray.map { it.type }
+
+        var fill: Map<Position, PieceType>? = null
+        var attempts = 0
+        while (attempts < 200 && fill == null) {
+            attempts++
+            val candidate = constrainedFill(freePositions, remainingTypes, player) ?: continue
+            // 已布子 + 新填子合并成 probe，整体校验
+            val probe = HashMap<Position, ChessPiece>()
+            for ((p, pc) in boardState) if (pc.owner == player) probe[p] = pc
+            for ((p, t) in candidate) probe[p] = ChessPiece("probe", t, player)
+            if (GameEngine.verifyLayout(probe, player) &&
+                GameEngine.satisfiesAutoConstraints(probe, player) &&
+                !GameEngine.hasForbiddenTrappedPiece(probe, player)) {
+                fill = candidate
+            }
+        }
+
+        val playerStr = if (player == Player.A) "玩家 A" else "玩家 B"
+        if (fill == null) {
+            showToast("$playerStr：当前布局无法自动补全，请调整后重试", player)
+            return
+        }
+
+        // 仅填空位，已布子保持不动；从托盘移除对应子
+        val pool = tray.toMutableList()
+        for ((pos, type) in fill) {
+            val piece = pool.first { it.type == type }
+            boardState[pos] = piece
+            pool.remove(piece)
+            tray.remove(piece)
+        }
+        refreshUI()
+        showToast("$playerStr：已为你补全剩余布阵", player)
+    }
+
+    /** 收集该玩家可布防的物理格（行优先、跳过行营），再按谓词过滤。 */
+    private fun collectAvailablePositions(player: Player, keep: (Position) -> Boolean): ArrayList<Position> {
+        val result = ArrayList<Position>()
+        val rowOrder = if (player == Player.A) (6..11).toList() else (5 downTo 0).toList()
+        for (r in rowOrder) {
+            for (c in 0 until GameEngine.COLS) {
+                val pos = Position(r, c)
+                if (!GameEngine.isCamp(pos) && keep(pos)) result.add(pos)
+            }
+        }
+        return result
     }
 
     /** 取一套预设阵型，50% 概率按列做真实镜像翻转 (c→4-c)，返回「位置→兵种」方案。 */
@@ -924,40 +985,50 @@ class MainActivity : AppCompatActivity() {
         return layout to name
     }
 
-    /** 受约束随机布阵：军旗随机入一个大本营、地雷撒后两排、炸弹避开前两排、其余活动子随机散布。 */
-    private fun randomTypeLayout(availablePositions: List<Position>, player: Player): Pair<Map<Position, PieceType>, String> {
-        val remaining = availablePositions.toMutableList()
-        val layout = HashMap<Position, PieceType>()
-
-        // 军旗 → 随机一个大本营
-        val flagPos = remaining.filter { GameEngine.isHq(it) }.random()
-        layout[flagPos] = PieceType.FLAG
-        remaining.remove(flagPos)
-
-        // 地雷 ×3 → 后两排
-        val mineRows = if (player == Player.A) 10..11 else 0..1
-        for (p in remaining.filter { it.row in mineRows }.shuffled().take(3)) {
-            layout[p] = PieceType.LANDMINE
-            remaining.remove(p)
-        }
-
-        // 炸弹 ×2 → 不在前两排
-        val firstTwoRows = if (player == Player.A) 6..7 else 4..5
-        for (p in remaining.filter { it.row !in firstTwoRows }.shuffled().take(2)) {
-            layout[p] = PieceType.BOMB
-            remaining.remove(p)
-        }
-
-        // 其余 19 个活动子（兵种含正确数量）随机散布
-        val movable = mutableListOf<PieceType>()
-        for (t in PieceType.values()) {
-            if (t == PieceType.FLAG || t == PieceType.LANDMINE || t == PieceType.BOMB) continue
-            repeat(t.count) { movable.add(t) }
-        }
-        remaining.shuffle()
-        for (i in movable.indices) layout[remaining[i]] = movable[i]
-
+    /** 受约束随机布阵：全编制 25 子按约束铺满 25 空位；放不下返回 null。 */
+    private fun randomTypeLayout(availablePositions: List<Position>, player: Player): Pair<Map<Position, PieceType>, String>? {
+        val allPieces = mutableListOf<PieceType>()
+        for (t in PieceType.values()) repeat(t.count) { allPieces.add(t) }
+        val layout = constrainedFill(availablePositions, allPieces, player) ?: return null
         return layout to "随机阵"
+    }
+
+    /**
+     * 约束感知填充：把 pieces 按"军旗→地雷→司令(前2排)→旅/师/军长(非第一排)→炸弹(非前2排)→其余随机"
+     * 顺序放入 positions；任一类无合法空位则返回 null。positions 与 pieces 数量应相等。
+     */
+    private fun constrainedFill(positions: List<Position>, pieces: List<PieceType>, player: Player): Map<Position, PieceType>? {
+        val freeCells = positions.toMutableList()
+        val pool = pieces.toMutableList()
+        val layout = HashMap<Position, PieceType>()
+        val mineRows = if (player == Player.A) 10..11 else 0..1
+        val frontTwoRows = if (player == Player.A) 6..7 else 4..5
+        val firstRow = if (player == Player.A) 6 else 5
+
+        // 取若干个满足 candidate 的空位放置该兵种；空位不足则失败
+        fun place(type: PieceType, candidate: (Position) -> Boolean): Boolean {
+            repeat(pool.count { it == type }) {
+                val spot = freeCells.filter(candidate).randomOrNull() ?: return false
+                layout[spot] = type
+                freeCells.remove(spot)
+                pool.remove(type)
+            }
+            return true
+        }
+
+        if (!place(PieceType.FLAG) { GameEngine.isHq(it) }) return null
+        if (!place(PieceType.LANDMINE) { it.row in mineRows }) return null
+        if (!place(PieceType.COMMANDER) { it.row in frontTwoRows }) return null
+        for (t in listOf(PieceType.BRIGADE_COMMANDER, PieceType.DIVISION_COMMANDER, PieceType.CORPS_COMMANDER)) {
+            if (!place(t) { it.row != firstRow }) return null
+        }
+        if (!place(PieceType.BOMB) { it.row !in frontTwoRows }) return null
+
+        // 其余子（团/营/连/排/工）随机铺满剩余空位
+        freeCells.shuffle()
+        if (pool.size != freeCells.size) return null
+        for (i in pool.indices) layout[freeCells[i]] = pool[i]
+        return layout
     }
 
     /**

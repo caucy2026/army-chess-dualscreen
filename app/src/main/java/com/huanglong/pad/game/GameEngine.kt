@@ -393,4 +393,24 @@ object GameEngine {
 
         return true
     }
+
+    /**
+     * 一键布阵专用的战术约束校验（刻意不并入 verifyLayout，避免限制玩家手动自由布子）。
+     * 房规：司令必须压在最前两排；旅长/师长/军长不得出现在最前一排。
+     */
+    fun satisfiesAutoConstraints(board: Map<Position, ChessPiece>, player: Player): Boolean {
+        val frontTwoRows = if (player == Player.A) 6..7 else 4..5
+        val firstRow = if (player == Player.A) 6 else 5
+        for ((pos, piece) in board) {
+            if (piece.owner != player) continue
+            when (piece.type) {
+                PieceType.COMMANDER -> if (pos.row !in frontTwoRows) return false
+                PieceType.BRIGADE_COMMANDER,
+                PieceType.DIVISION_COMMANDER,
+                PieceType.CORPS_COMMANDER -> if (pos.row == firstRow) return false
+                else -> {}
+            }
+        }
+        return true
+    }
 }
