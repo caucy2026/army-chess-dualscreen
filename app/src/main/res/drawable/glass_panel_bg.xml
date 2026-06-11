@@ -1,21 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 苹果极简卡片：极小投影 + 纯粹的半透明白 -->
+<!-- 晶莹剔透高档磨砂玻璃面板：超低填充度（让背景清晰透露） + 双层高光折射边缘 + 柔和弥散阴影 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 1. 卡片极微弱投影 (弥散阴影) -->
-    <item android:top="2dp" android:left="1dp" android:right="1dp">
+    <!-- 1. 卡片底部弥散柔和投影 -->
+    <item android:top="4dp" android:left="2dp" android:right="2dp" android:bottom="1dp">
         <shape android:shape="rectangle">
-            <solid android:color="#0A000000" />
+            <solid android:color="#0D000000" />
             <corners android:radius="20dp" />
         </shape>
     </item>
 
-    <!-- 2. 卡片本体 (半透纯白亚克力质感) -->
-    <item android:bottom="2dp">
+    <!-- 2. 玻璃本体 (高透亚克力/毛玻璃：25% 填充白) -->
+    <item android:bottom="3dp" android:left="1dp" android:right="1dp">
         <shape android:shape="rectangle">
-            <solid android:color="#B3FFFFFF" />
+            <solid android:color="#40FFFFFF" />
             <corners android:radius="18dp" />
-            <stroke android:width="1dp" android:color="#FFFFFF" />
+            <!-- 折射高光边缘：微透明白描边 -->
+            <stroke android:width="1.2dp" android:color="#B3FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- 3. 玻璃镜面斜向高光层 (带来通透偏光感，呈现反射质感) -->
+    <item android:bottom="3.5dp" android:left="1.5dp" android:right="1.5dp" android:top="0.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="17dp" />
+            <gradient 
+                android:startColor="#2BFFFFFF" 
+                android:centerColor="#00FFFFFF" 
+                android:endColor="#00FFFFFF" 
+                android:centerY="0.45" 
+                android:angle="270" />
         </shape>
     </item>
 </layer-list>

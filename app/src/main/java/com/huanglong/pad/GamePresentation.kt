@@ -100,8 +100,11 @@ class GamePresentation(
 
     // 副屏背景场景循环：四张场景图轮播（已移除"无背景"档），与主屏 A 各自独立。
     // 启动恢复上次保存的背景；若无记录/读到无背景则随机选一张兜底。
-    private val bgScenes = intArrayOf(R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3, R.drawable.bg_scene_4)
-    private val bgSceneNames = arrayOf("沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空")
+    private val bgScenes = intArrayOf(
+        R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3,
+        R.drawable.bg_scene_4, R.drawable.bg_scene_5, R.drawable.bg_scene_6
+    )
+    private val bgSceneNames = arrayOf("沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空", "烟雨江南", "泼墨金辉")
     private val bgPrefs by lazy { context.getSharedPreferences("game_prefs", Context.MODE_PRIVATE) }
     private var bgSceneIndex = -1
 
