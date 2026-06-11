@@ -22,8 +22,8 @@ app/src/main/java/com/huanglong/pad/
 
 ### 1.2 资源与构建脚本
 * **[strings.xml](file:///E:/pad/app/src/main/res/values/strings.xml)**：包含所有 UI 文本及「📖 游戏规则」面板内的规则描述。
-* **[generate_tts.py](file:///E:/pad/generate_tts.py)**：方言语音 MP3 素材一键生成脚本，维护或修改文案后须重新运行此脚本。
-* **[gen_bg.py](file:///E:/pad/gen_bg.py)**：山水、沙漠、丛林等背景图的底层几何与纹理生成脚本。
+* **[generate_tts.py](file:///E:/pad/scripts/generate_tts.py)**：方言语音 MP3 素材一键生成脚本，维护或修改文案后须重新运行此脚本。
+* **[gen_bg.py](file:///E:/pad/scripts/gen_bg.py)**：山水、沙漠、丛林等背景图的底层几何与纹理生成脚本。
 * **`app/src/main/res/raw/`**：包含 160 个碰子裁决预置的方言 MP3 音频文件（命名格式 `tts_{result}_{dialect_index}_{voice_index}.mp3`）。
 
 ---
@@ -101,7 +101,7 @@ app/src/main/java/com/huanglong/pad/
   * `result`：对决结果 (`attacker_won` 攻方胜, `defender_won` 守方胜, `both_died` 同归于尽, `flag_captured` 夺旗)。
   * `dialect_index`：`0..3`（方言索引）。
   * `voice_index`：`0..9`（每一类结果都有 10 句不同的搞笑文案可供循环播放）。
-* **极重要**：`MainActivity.kt` 伴生对象中声明的搞笑文案列表，必须与 `generate_tts.py` 内的 `TEXT_DATA` 字典保持严格的字面一致！修改文案后，需通过 Python 脚本重新生成音频包并加入到 Git。
+* **极重要**：`MainActivity.kt` 伴生对象中声明的搞笑文案列表，必须与 `scripts/generate_tts.py` 内的 `TEXT_DATA` 字典保持严格的字面一致！修改文案后，需通过 Python 脚本重新生成音频包并加入到 Git。
 
 ---
 
