@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 1. 最外层：大范围强弥散发光光晕（极光绿荧光） -->
+    <!-- 1. 最外层：大范围强弥散发光光晕（极光绿/翡翠绿荧光） -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="13dp"/>
-            <solid android:color="#4D39FF14"/>
+            <solid android:color="#4D34D399"/>
         </shape>
     </item>
     
@@ -12,26 +12,26 @@
     <item android:top="1dp" android:left="1dp" android:right="1dp" android:bottom="1dp">
         <shape android:shape="rectangle">
             <corners android:radius="12dp"/>
-            <solid android:color="#BF39FF14"/>
+            <solid android:color="#BF34D399"/>
         </shape>
     </item>
     
-    <!-- 3. 第三层：陶瓷底部深色阴影/底座厚度 -->
+    <!-- 3. 第三层：陶瓷底部深色阴影/底座厚度（深暖灰底座带微绿） -->
     <item android:top="5dp" android:left="3dp" android:right="3dp" android:bottom="2dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
-            <solid android:color="#022C22"/>
+            <solid android:color="#3F4943"/>
         </shape>
     </item>
 
-    <!-- 4. 第四层：主体瓷质基底（翡翠绿玉） -->
+    <!-- 4. 第四层：主体瓷质基底（羊脂白玉偏淡翠绿） -->
     <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
             <gradient 
-                android:startColor="#059669" 
-                android:centerColor="#34D399" 
-                android:endColor="#065F46" 
+                android:startColor="#F0FDF4" 
+                android:centerColor="#FFFDF9" 
+                android:endColor="#D1E7DD" 
                 android:angle="270" />
         </shape>
     </item>
@@ -40,7 +40,7 @@
     <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
-            <stroke android:width="1.2dp" android:color="#ECFDF5"/>
+            <stroke android:width="1.2dp" android:color="#B3ECFDF5"/>
             <solid android:color="#00000000"/>
         </shape>
     </item>

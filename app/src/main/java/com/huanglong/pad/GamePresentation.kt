@@ -248,7 +248,7 @@ class GamePresentation(
                 if (piece.owner == Player.B) {
                     // 己方棋子：明棋，绿色高亮框
                     tvPiece.setBackgroundResource(R.drawable.piece_b_bg)
-                    tvPiece.setTextColor(ContextCompat.getColor(context, R.color.white))
+                    tvPiece.setTextColor(ContextCompat.getColor(context, R.color.black))
                     
                     // 如果在对弈阶段是被选中的棋子，增加呼吸灯边框
                     if (selectedCell == pos) {
@@ -304,7 +304,7 @@ class GamePresentation(
         // 渲染攻方（如果攻方是副屏玩家 B 则亮明，否则保密）
         if (attacker.owner == Player.B) {
             binding.subFighterSelf.text = attacker.type.displayName
-            binding.subFighterSelf.setTextColor(ContextCompat.getColor(context, R.color.white))
+            binding.subFighterSelf.setTextColor(ContextCompat.getColor(context, R.color.black))
             binding.subFighterSelf.setBackgroundResource(R.drawable.piece_b_bg)
         } else {
             binding.subFighterSelf.text = ""
@@ -314,7 +314,7 @@ class GamePresentation(
         // 渲染防守方（如果防守方是副屏玩家 B 则亮明，否则保密）
         if (defender.owner == Player.B) {
             binding.subFighterEnemy.text = defender.type.displayName
-            binding.subFighterEnemy.setTextColor(ContextCompat.getColor(context, R.color.white))
+            binding.subFighterEnemy.setTextColor(ContextCompat.getColor(context, R.color.black))
             binding.subFighterEnemy.setBackgroundResource(R.drawable.piece_b_bg)
         } else {
             binding.subFighterEnemy.text = ""
@@ -370,10 +370,10 @@ class GamePresentation(
             // 渲染成玩家 B 绿色风格
             if (selected?.id == piece.id) {
                 tv.setBackgroundResource(R.drawable.piece_b_selected_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.white))
+                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.black))
             } else {
                 tv.setBackgroundResource(R.drawable.piece_b_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.white))
+                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.black))
             }
 
             tv.setOnClickListener { onSelect(piece) }

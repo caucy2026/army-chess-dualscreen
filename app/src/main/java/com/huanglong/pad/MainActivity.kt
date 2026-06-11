@@ -1111,7 +1111,7 @@ class MainActivity : AppCompatActivity() {
                     // 敌方：暗子
                     if (gameStage == GameStage.FINISHED) {
                         tvPiece.setBackgroundResource(R.drawable.piece_b_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
+                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.black))
                     } else if (piece.type == PieceType.FLAG && revealedFlagOwners.contains(piece.owner)) {
                         // 司令阵亡，敌方军旗强制亮明（保留文字"军旗"，红底天窗）
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)

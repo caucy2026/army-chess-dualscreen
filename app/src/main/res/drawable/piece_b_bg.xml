@@ -1,51 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 1. 最外层：大范围弥散光晕（琥珀金） -->
+    <!-- 1. 最外层：大范围微弱弥散阴影/光晕（淡象牙金） -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="13dp"/>
-            <solid android:color="#1AFBBF24"/>
+            <solid android:color="#1AFFFBEB"/>
         </shape>
     </item>
     
-    <!-- 2. 第二层：渐浓的近身光晕 -->
+    <!-- 2. 第二层：近身柔和光晕 -->
     <item android:top="1dp" android:left="1dp" android:right="1dp" android:bottom="1dp">
         <shape android:shape="rectangle">
             <corners android:radius="12dp"/>
-            <solid android:color="#33FBBF24"/>
+            <solid android:color="#33FFFBEB"/>
         </shape>
     </item>
     
-    <!-- 3. 第三层：陶瓷底部深色阴影/底座厚度 -->
+    <!-- 3. 第三层：底座厚度（深暖灰褐阴影底座） -->
     <item android:top="5dp" android:left="3dp" android:right="3dp" android:bottom="2dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
-            <solid android:color="#451A03"/>
+            <solid android:color="#44403C"/>
         </shape>
     </item>
 
-    <!-- 4. 第四层：主体瓷质基底（金丝琥珀） -->
+    <!-- 4. 第四层：主体瓷质基底（羊脂白玉瓷） -->
     <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
             <gradient 
-                android:startColor="#92400E" 
-                android:centerColor="#D97706" 
-                android:endColor="#B45309" 
+                android:startColor="#FAFDFB" 
+                android:centerColor="#FFFDF9" 
+                android:endColor="#E5E2D5" 
                 android:angle="270" />
         </shape>
     </item>
     
-    <!-- 5. 第五层：菲涅尔透光边缘（极细半透明白色瓷釉描边） -->
+    <!-- 5. 第五层：菲涅尔透光边缘（极细亮白瓷釉描边） -->
     <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
-            <stroke android:width="1dp" android:color="#90FFFFFF"/>
+            <stroke android:width="1dp" android:color="#B3FFFFFF"/>
             <solid android:color="#00000000"/>
         </shape>
     </item>
 
-    <!-- 6. 第六层：陶瓷球面高光（左上角径向聚光，模拟围棋等球面反光） -->
+    <!-- 6. 第六层：陶瓷球面高光（左上角径向聚光，模拟球面反光） -->
     <item android:top="3.5dp" android:left="3.5dp" android:right="3.5dp" android:bottom="5.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="9dp"/>
@@ -54,12 +54,12 @@
                 android:gradientRadius="45dp"
                 android:centerX="0.25"
                 android:centerY="0.25"
-                android:startColor="#B3FFFFFF"
+                android:startColor="#CCFFFFFF"
                 android:endColor="#00FFFFFF"/>
         </shape>
     </item>
     
-    <!-- 7. 第七层：镜面偏光（顶部弧形渐变，增强通透玻璃感） -->
+    <!-- 7. 第七层：镜面偏光（顶部弧形渐变，增强玻璃反光感） -->
     <item android:top="3.5dp" android:left="3.5dp" android:right="3.5dp" android:bottom="5.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="9dp"/>
