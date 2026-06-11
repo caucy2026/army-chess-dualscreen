@@ -78,11 +78,16 @@ class MainActivity : AppCompatActivity() {
     private var sndBoom = 0
     private var sndWin = 0
 
-    // 本地裁决搞笑语音音效 ID
-    private val sndTtsAttackerWon = mutableListOf<Int>()
-    private val sndTtsDefenderWon = mutableListOf<Int>()
-    private val sndTtsBothDied = mutableListOf<Int>()
-    private val sndTtsFlagCaptured = mutableListOf<Int>()
+    // 本地裁决搞笑语音音效 ID（按 [dialectIndex][voiceIndex] 存放）
+    private val sndTtsAttackerWon = Array(4) { mutableListOf<Int>() }
+    private val sndTtsDefenderWon = Array(4) { mutableListOf<Int>() }
+    private val sndTtsBothDied = Array(4) { mutableListOf<Int>() }
+    private val sndTtsFlagCaptured = Array(4) { mutableListOf<Int>() }
+
+    // 玩家 A 和 B 独立选择的音效方言索引（0 普通话, 1 四川话, 2 河南话, 3 粤语）
+    private val voiceNames = arrayOf("普通话", "四川话", "河南话", "粤语")
+    var voiceIndexA = 0
+    var voiceIndexB = 0
 
     // 保存进入应用前的自动旋转状态
     private var originalRotationState: Int = -1
@@ -137,6 +142,7 @@ class MainActivity : AppCompatActivity() {
         initTrayRecyclerView()
         setupListeners()
         applyInitialBackground()
+        applyInitialVoice()
         refreshUI()
     }
 
@@ -268,6 +274,11 @@ class MainActivity : AppCompatActivity() {
         bgPrefs.edit().putInt("bg_index_a", bgSceneIndex).apply()
     }
 
+    private fun applyInitialVoice() {
+        voiceIndexA = bgPrefs.getInt("voice_index_a", 0)
+        voiceIndexB = bgPrefs.getInt("voice_index_b", 0)
+    }
+
     private fun setupListeners() {
         // 一键布防
         binding.btnAutoLayout.setOnClickListener {
@@ -288,6 +299,22 @@ class MainActivity : AppCompatActivity() {
             bgPrefs.edit().putInt("bg_index_a", bgSceneIndex).apply()
             showToast("背景：${bgSceneNames[bgSceneIndex]}", Player.A)
         }
+        // 更换音效
+        binding.btnChangeVoice.setOnClickListener {
+            voiceIndexA = (voiceIndexA + 1) % 4
+            bgPrefs.edit().putInt("voice_index_a", voiceIndexA).apply()
+            showToast("音效：${voiceNames[voiceIndexA]}", Player.A)
+        }
+    }
+
+    /**
+     * 玩家 B 更换音效
+     */
+    fun changeVoiceB() {
+        voiceIndexB = (voiceIndexB + 1) % 4
+        bgPrefs.edit().putInt("voice_index_b", voiceIndexB).apply()
+        showToast("音效：${voiceNames[voiceIndexB]}", Player.B)
+        gamePresentation?.showTip("音效：${voiceNames[voiceIndexB]}")
     }
 
     /**
@@ -584,15 +611,17 @@ class MainActivity : AppCompatActivity() {
             // 交战音效 + 弹出裁决浮窗（主屏 A 与副屏 B 同步显示）
             playBattleSound(result, attacker.owner)
             
+            // 依据攻方玩家选择的方言播放
+            val dialect = if (attacker.owner == Player.A) voiceIndexA else voiceIndexB
             // 玩家A的专属语音/文案在 0..4，玩家B的在 5..9
             val textIndex = if (attacker.owner == Player.A) (0..4).random() else (5..9).random()
-            val resultText = getBattleResultText(result, textIndex)
+            val resultText = getBattleResultText(result, dialect, textIndex)
             
             showBattleDialog(attacker, defender, resultText)
             gamePresentation?.showBattleDialog(attacker, defender, resultText)
 
             // 语音播报：谁主动出击就播放谁那边的本地预置搞笑音频（0延迟）
-            playTtsVoice(result, textIndex, attacker.owner)
+            playTtsVoice(result, dialect, textIndex)
 
             boardState.remove(from)
             when (result) {
@@ -658,15 +687,19 @@ class MainActivity : AppCompatActivity() {
         sndClash = sp.load(this, R.raw.battle_clash, 1)
         sndBoom = sp.load(this, R.raw.battle_boom, 1)
         sndWin = sp.load(this, R.raw.battle_win, 1)
-        for (i in 0 until 10) {
-            val idAtt = resources.getIdentifier("tts_attacker_won_$i", "raw", packageName)
-            if (idAtt != 0) sndTtsAttackerWon.add(sp.load(this, idAtt, 1))
-            val idDef = resources.getIdentifier("tts_defender_won_$i", "raw", packageName)
-            if (idDef != 0) sndTtsDefenderWon.add(sp.load(this, idDef, 1))
-            val idBoth = resources.getIdentifier("tts_both_died_$i", "raw", packageName)
-            if (idBoth != 0) sndTtsBothDied.add(sp.load(this, idBoth, 1))
-            val idFlag = resources.getIdentifier("tts_flag_captured_$i", "raw", packageName)
-            if (idFlag != 0) sndTtsFlagCaptured.add(sp.load(this, idFlag, 1))
+
+        // 加载 4 种方言，每种方言 10 个音频文件
+        for (d in 0 until 4) {
+            for (i in 0 until 10) {
+                val idAtt = resources.getIdentifier("tts_attacker_won_${d}_$i", "raw", packageName)
+                if (idAtt != 0) sndTtsAttackerWon[d].add(sp.load(this, idAtt, 1))
+                val idDef = resources.getIdentifier("tts_defender_won_${d}_$i", "raw", packageName)
+                if (idDef != 0) sndTtsDefenderWon[d].add(sp.load(this, idDef, 1))
+                val idBoth = resources.getIdentifier("tts_both_died_${d}_$i", "raw", packageName)
+                if (idBoth != 0) sndTtsBothDied[d].add(sp.load(this, idBoth, 1))
+                val idFlag = resources.getIdentifier("tts_flag_captured_${d}_$i", "raw", packageName)
+                if (idFlag != 0) sndTtsFlagCaptured[d].add(sp.load(this, idFlag, 1))
+            }
         }
         soundPool = sp
     }
@@ -674,13 +707,13 @@ class MainActivity : AppCompatActivity() {
     /**
      * 播放主动出击方视角的本地预置搞笑裁决语音（0延迟）
      */
-    private fun playTtsVoice(result: BattleResult, textIndex: Int, attackerPlayer: Player) {
+    private fun playTtsVoice(result: BattleResult, dialect: Int, textIndex: Int) {
         val sp = soundPool ?: return
         val list = when (result) {
-            BattleResult.ATTACKER_WON -> sndTtsAttackerWon
-            BattleResult.DEFENDER_WON -> sndTtsDefenderWon
-            BattleResult.BOTH_DIED -> sndTtsBothDied
-            BattleResult.FLAG_CAPTURED -> sndTtsFlagCaptured
+            BattleResult.ATTACKER_WON -> sndTtsAttackerWon[dialect]
+            BattleResult.DEFENDER_WON -> sndTtsDefenderWon[dialect]
+            BattleResult.BOTH_DIED -> sndTtsBothDied[dialect]
+            BattleResult.FLAG_CAPTURED -> sndTtsFlagCaptured[dialect]
         }
         if (list.isNotEmpty() && textIndex < list.size) {
             val id = list[textIndex]
@@ -694,30 +727,117 @@ class MainActivity : AppCompatActivity() {
      * 根据观看方视角生成对决裁决文案（主屏 A 视角 / 副屏 B 视角）
      */
     companion object {
-        val textAttackerWon = listOf(
-            "哈哈，我的子比你大，你被吃啦！", "以卵击石，不自量力！", "太弱了，不堪一击啊！", "碾压局，轻松拿下！", "哎呀，不好意思，把你吃掉了。",
-            "兄弟，看清楚军衔再撞好吗？", "大鱼吃小鱼，我吃你！", "哇哦，白给的一个子，谢谢啦！", "就这？还想跟我硬碰硬？", "实力悬殊，我赢麻了！"
+        val textAttackerWonDialects = listOf(
+            // 0: 普通话
+            listOf(
+                "哈哈，我的子比你大，你被吃啦！", "以卵击石，不自量力！", "太弱了，不堪一击啊！", "碾压局，轻松拿下！", "哎呀，不好意思，把你吃掉了。",
+                "兄弟，看清楚军衔再撞好吗？", "大鱼吃小鱼，我吃你！", "哇哦，白给的一个子，谢谢啦！", "就这？还想跟我硬碰硬？", "实力悬殊，我赢麻了！"
+            ),
+            // 1: 四川话
+            listOf(
+                "你个铲铲，我大你一级，把你吃咯！", "牙刷！脑壳铁是不是，直接给你吃掉！", "要得嘛，吃得你渣渣都不剩！", "兄弟，你这是白给啊，谢了哈！", "哎呀，不好意思，把你干掉了。",
+                "大鱼吃小鱼，我吃你没商量！", "看清楚哈，我比你大，你被吃啦！", "就这？还想跟我硬碰硬？", "简直是白送的，那我就收下了哈！", "哈哈，我赢麻了，你太弱了！"
+            ),
+            // 2: 河南话
+            listOf(
+                "弄啥咧！看都不看直接吃了你！", "乖乖，这小兵还想反抗？直接拿下！", "中不中？我比你大，你被吃啦！", "就这实力还来硬碰？回炉重练吧！", "哎呀，不好意思，把你吃掉了。",
+                "白给的果子，我就不客气了哈！", "实力悬殊，我赢麻了！", "看清楚军衔再撞，老铁！", "大鱼吃小鱼，轻松解决！", "太弱了，简直不堪一击！"
+            ),
+            // 3: 粤语
+            listOf(
+                "哈哈，我大过你，你被我食咗啦！", "螳臂当车！你仲未够班啊！", "太弱啦，一巴掌拍扁你！", "轻松搞掂，完全冇难度！", "哎呀，唔好意思，食咗你隻棋。",
+                "靚仔，睇清楚軍銜先撞啦！", "大魚吃小魚，我食你！", "哇，送大禮啊，多謝晒！", "就咁？仲想同我硬碰硬？", "實力懸殊，我贏晒啦！"
+            )
         )
-        val textDefenderWon = listOf(
-            "哎呦喂，自己撞枪口上啦？", "飞蛾扑火，自寻死路！", "防守反击，就是这么轻松！", "撞墙了吧？头破血流了吧！", "真是不长眼啊，直接送人头！",
-            "哈哈，这可是铁板一块，撞不破的！", "守株待兔，你果然上钩了！", "感谢老铁送来的棋子！", "想偷袭？没门！我比你大！", "完美防御，反杀成功！"
+
+        val textDefenderWonDialects = listOf(
+            // 0: 普通话
+            listOf(
+                "哎呦喂，自己撞枪口上啦？", "飞蛾扑火，自寻死路！", "防守反击，就是这么轻松！", "撞墙了吧？头破血流了吧！", "真是不长眼啊，直接送人头！",
+                "哈哈，这可是铁板一块，撞不破的！", "守株待兔，你果然上钩了！", "感谢老铁送来的棋子！", "想偷袭？没门！我比你大！", "完美防御，反杀成功！"
+            ),
+            // 1: 四川话
+            listOf(
+                "哎呀喂，自己撞到枪口上，怪哪个嘛？", "撞墙了吧？脑壳给你碰起个包！", "防守反击，就是这么轻松！", "真是不长眼，自己送上门来！", "守株待兔，你果然上钩了！",
+                "哈哈，我这可是铁板，你撞得动？", "想偷袭？没门！我比你大得多！", "感谢老铁送来的棋子哈！", "完美防守，直接把你反杀！", "飞蛾扑火，自寻死路哟！"
+            ),
+            // 2: 河南话
+            listOf(
+                "哎呦喂，这合适吗？自己撞上来了！", "这可是铁板，脑门儿撞疼了吧！", "防守反击，就是这么中！", "自寻死路，可怪不得我啊！", "守株待兔，你果然上钩了！",
+                "想偷袭？没门！我比你大！", "感谢老铁送来的大礼！", "完美防守，反杀成功！", "飞蛾扑火，自寻死路！", "哈哈，撞墙了吧，头破血流了吧！"
+            ),
+            // 3: 粤语
+            listOf(
+                "哎呀喂，自己撞槍口，抵死啦！", "飛蛾撲火，自尋死路！", "防守反擊，就係咁輕鬆！", "撞牆啦？頭破血流啦！", "真係唔長眼，直接送人頭！",
+                "哈哈，我呢度係鐵板，撞唔入嘅！", "守株待兔，你果然上鉤！", "多謝老友送人頭！", "想偷襲？冇門！我大過你！", "完美防守，反殺成功！"
+            )
         )
-        val textBothDied = listOf(
-            "卧槽，居然同归于尽了！", "啊！一起毁灭吧！", "炸弹！砰的一声，什么都没了！", "玉石俱焚，谁也别想好过！", "双双把家还，这也太惨烈了！",
-            "硬碰硬，结果大家都没了！", "旗鼓相当，一换一不亏！", "你不要过来啊！轰！同归于尽！", "这是什么神仙对决，直接双杀！", "得，这下大家都清净了。"
+
+        val textBothDiedDialects = listOf(
+            // 0: 普通话
+            listOf(
+                "卧槽，居然同归于尽了！", "啊！一起毁灭吧！", "炸弹！砰的一声，什么都没了！", "玉石俱焚，谁也别想好过！", "双双把家还，这也太惨烈了！",
+                "硬碰硬，结果大家都没了！", "旗鼓相当，一换一不亏！", "你不要过来啊！轰！同归于尽！", "这是什么神仙对决，直接双杀！", "得，这下大家都清净了。"
+            ),
+            // 1: 四川话
+            listOf(
+                "卧槽，居然同归于尽，太惨了嘛！", "玉石俱焚，大家一起毁灭吧！", "炸弹！砰的一声，大家都没了！", "双双把家还，这也太惨烈了！", "硬碰硬，这下大家都清静了。",
+                "啊！一换一，谁也不吃亏！", "你不要过来啊！轰！一起完蛋！", "这是啥子对决，直接双双阵亡！", "得，这下大家都清净了。", "硬碰硬, 结果大家都没了！"
+            ),
+            // 2: 河南话
+            listOf(
+                "卧槽，同归于尽，这也太惨了吧！", "炸弹！砰的一声，俩都没了！", "大家一起毁灭吧，谁也别活！", "硬碰硬，结果大家都没了！", "双双把家还，这叫一个壮烈！",
+                "你不要过来啊！轰！同归于尽！", "旗鼓相当，一换一不亏！", "这是什么神仙对决，直接双杀！", "得，这下大家都清净了。", "玉石俱焚，谁也别想好过！"
+            ),
+            // 3: 粤语
+            listOf(
+                "哇塞，居然同歸於盡！", "一齊毀滅啦，邊個都唔好過！", "炸彈！轟一聲，乜都冇晒！", "玉石俱焚，同你死過！", "一齊收工，真係慘烈！",
+                "硬碰硬，結果大家都冇咗！", "旗鼓相當，一換一唔蝕底！", "你唔好過嚟啊！轟！同歸於盡！", "咩神仙對決，直接雙殺！", "好啦，呢下大家都清靜晒。"
+            )
         )
-        val textFlagCaptured = listOf(
-            "拔得头筹！你的军旗被我扛走啦！", "军旗倒下，游戏结束！你输了！", "哈哈，你的大本营被我端啦！", "夺旗成功！胜利属于我！", "这军旗我就笑纳了，承让承让！",
-            "大势已去，你的军旗没保住啊！", "直捣黄龙，军旗到手！", "一招毙命，摘下你的军旗！", "防守太差了吧，军旗就这么被我拿了？", "绝杀！夺取军旗，游戏通关！"
+
+        val textFlagCapturedDialects = listOf(
+            // 0: 普通话
+            listOf(
+                "拔得头筹！你的军旗被我扛走啦！", "军旗倒下，游戏结束！你输了！", "哈哈，你的大本营被我端啦！", "夺旗成功！胜利属于我！", "这军旗我就笑纳了，承让承让！",
+                "大势已去，你的军旗没保住啊！", "直捣黄龙，军旗到手！", "一招毙命，摘下你的军旗！", "防守太差了吧，军旗就这么被我拿了？", "绝杀！夺取军旗，游戏通关！"
+            ),
+            // 1: 四川话
+            listOf(
+                "军旗到手，你输得稀里哗啦！", "哈哈，你的大本营被我端了！", "夺旗成功！胜利属于我！", "这军旗我就笑纳了，承让承让！", "大势已去，你的军旗没保住啊！",
+                "直捣黄龙，军旗到手！", "一招毙命，摘下你的军旗！", "防守太差了吧，军旗就这么被我拿了？", "绝杀！夺取军旗，游戏通关！", "军旗倒下，游戏结束！你输了！"
+            ),
+            // 2: 河南话
+            listOf(
+                "中！你家大本营被我端啦！", "军旗到手，这局我赢了！", "大势已去，你的军旗没保住啊！", "直捣黄龙，军旗我拿走了哈！", "绝杀！夺取军旗，游戏结束！",
+                "夺旗成功！胜利属于我！", "这军旗我就笑纳了，承让承让！", "防守太差了吧，军旗就这么被我拿了？", "一招毙命，摘下你的军旗！", "军旗倒下，游戏结束！你输了！"
+            ),
+            // 3: 粤语
+            listOf(
+                "拔得頭籌！你支軍旗被我搬走啦！", "軍旗冧咗，遊戲結束！你輸啦！", "哈哈，你個大本营被我端咗！", "奪旗成功！勝利屬於我！", "呢支軍旗我笑納啦，承讓承讓！",
+                "大勢已去，你支軍旗保唔住啦！", "直搗黃龍，軍旗到手！", "一招搞掂，攞走你支軍旗！", "防守咁差嘅，軍旗就咁被我攞咗？", "絕殺！奪取軍旗，遊戲通關！"
+            )
         )
     }
 
-    fun getBattleResultText(result: BattleResult, index: Int): String {
+    fun getBattleResultText(result: BattleResult, dialect: Int, index: Int): String {
         return when (result) {
-            BattleResult.ATTACKER_WON -> textAttackerWon.getOrElse(index) { textAttackerWon.first() }
-            BattleResult.DEFENDER_WON -> textDefenderWon.getOrElse(index) { textDefenderWon.first() }
-            BattleResult.BOTH_DIED -> textBothDied.getOrElse(index) { textBothDied.first() }
-            BattleResult.FLAG_CAPTURED -> textFlagCaptured.getOrElse(index) { textFlagCaptured.first() }
+            BattleResult.ATTACKER_WON -> {
+                val list = textAttackerWonDialects[dialect]
+                list.getOrElse(index) { list.first() }
+            }
+            BattleResult.DEFENDER_WON -> {
+                val list = textDefenderWonDialects[dialect]
+                list.getOrElse(index) { list.first() }
+            }
+            BattleResult.BOTH_DIED -> {
+                val list = textBothDiedDialects[dialect]
+                list.getOrElse(index) { list.first() }
+            }
+            BattleResult.FLAG_CAPTURED -> {
+                val list = textFlagCapturedDialects[dialect]
+                list.getOrElse(index) { list.first() }
+            }
         }
     }
 
@@ -1048,16 +1168,19 @@ class MainActivity : AppCompatActivity() {
                 binding.btnReady.visibility = View.VISIBLE
                 binding.btnReady.isEnabled = !isReadyA
                 binding.btnReady.text = if (isReadyA) "已就绪" else "完成布阵"
+                binding.btnChangeVoice.visibility = View.GONE
             }
             GameStage.PLAYING -> {
                 binding.tvStatusText.text = "对弈中..."
                 binding.tvTurnIndicator.text = if (currentTurn == Player.A) "🔵 轮到您的回合" else "🟢 玩家 B 回合中"
                 binding.btnAutoLayout.visibility = View.GONE
                 binding.btnReady.visibility = View.GONE
+                binding.btnChangeVoice.visibility = View.VISIBLE
             }
             GameStage.FINISHED -> {
                 binding.tvStatusText.text = if (winReason.isEmpty()) "游戏结束" else "游戏结束：$winReason"
                 binding.tvTurnIndicator.text = if (winner == Player.A) "🎉 恭喜！您获胜了！" else "❌ 您输了！"
+                binding.btnChangeVoice.visibility = View.GONE
             }
         }
 

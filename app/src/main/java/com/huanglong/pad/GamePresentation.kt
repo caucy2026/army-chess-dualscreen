@@ -137,6 +137,10 @@ class GamePresentation(
             bgPrefs.edit().putInt("bg_index_b", bgSceneIndex).apply()
             showTip("背景：${bgSceneNames[bgSceneIndex]}")
         }
+        // 更换音效
+        binding.btnChangeVoice.setOnClickListener {
+            mainActivity.changeVoiceB()
+        }
     }
 
     fun playMoveAnimation(from: Position, to: Position) {
@@ -186,18 +190,21 @@ class GamePresentation(
                 binding.btnReady.visibility = View.VISIBLE
                 binding.btnReady.isEnabled = !readyB
                 binding.btnReady.text = if (readyB) "已就绪" else "完成布阵"
+                binding.btnChangeVoice.visibility = View.GONE
             }
             MainActivity.GameStage.PLAYING -> {
                 binding.tvStatusText.text = "对弈中..."
                 binding.tvTurnIndicator.text = if (turn == Player.B) "🟢 轮到您的回合" else "🔵 玩家 A 回合中"
                 binding.btnAutoLayout.visibility = View.GONE
                 binding.btnReady.visibility = View.GONE
+                binding.btnChangeVoice.visibility = View.VISIBLE
             }
             MainActivity.GameStage.FINISHED -> {
                 val winner = mainActivity.winner
                 val reason = mainActivity.winReason
                 binding.tvStatusText.text = if (reason.isEmpty()) "游戏结束" else "游戏结束：$reason"
                 binding.tvTurnIndicator.text = if (winner == Player.B) "🎉 恭喜！您获胜了！" else "❌ 您输了！"
+                binding.btnChangeVoice.visibility = View.GONE
             }
         }
 

@@ -56,6 +56,19 @@
 - [x] 运行 Gradle 构建，编译并完成实机部署验证
 - [x] 提交全部修改到 Git 库
 
+## 第七轮（双屏对弈搞笑音效与方言切换系统）
 
+- [x] 制定并重新编写 `generate_tts.py` 支持 4 种方言（普通话、四川话、河南话、粤语）和各自搞笑文案的音频生成
+- [x] 运行 `generate_tts.py` 生成 160 个新的 TTS 语音文件，清理旧版 `tts_*.mp3` 音频文件
+- [x] 修改 `activity_main.xml`，在“更换背景”按钮后新增“更换音效”按钮（默认不可见，仅在对弈中显示）
+- [x] 修改 `presentation_game.xml`，在“更换背景”按钮后新增“更换音效”按钮（默认不可见，仅在对弈中显示）
+- [x] 修改 `MainActivity.kt`，新增 A/B 玩家音效方言状态，实现初始化加载及持久化，实现“更换音效”触发逻辑，并根据 Stage 动态改变按钮可见性
+- [x] 修改 `MainActivity.kt` 中的 `initSound()` 和 `playTtsVoice()`，支持多方言音频的 SoundPool 加载与播放，并优化 `moveOrAttack()` 中对决文案及语音匹配逻辑
+- [x] 修改 `GamePresentation.kt`，同步处理副屏 B 玩家“更换音效”按钮的点击事件和可见性
+- [x] 编译验证及清理多余临时文件，验证功能符合要求
 
+## 第八轮（游戏规则说明文本同步）
 
+- [x] 修改 `app/src/main/res/values/strings.xml` 中的 `game_rules_text`，使之与程序中的实际规则（碰地雷同归于尽、大本营棋子可移动、困死高阶子限制等房规）完全同步
+- [x] 运行 Gradle 构建编译，验证是否无语法错误与正常生成
+- [x] 提交全部更改并记录到 ui_review.md（如需）或同步文档

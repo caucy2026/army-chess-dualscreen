@@ -22,10 +22,15 @@
 - **行军轨迹残留问题**: `MainActivity.kt` 内的 `lastMoveFrom` 和 `lastMoveTo` 负责记录并高亮上一回合的棋子移动轨迹。在每次游戏重置 (`initGameData()`) 时，必须确保将其清空为 `null`，否则上一局的残影会遗留在棋盘上（已修复）。
 - **旋转锁定**: 为确保对战体验不受重力感应影响，应用在启动时会自动锁定系统的传感器旋转行为。
 
-## 4. 裁决语音 (TTS) 音色映射
-- `res/raw/tts_*.mp3`（每类 10 个）由 edge-tts 生成，索引 0..4 为玩家 A 音色（男声 `zh-CN-YunxiNeural`），索引 5..9 为玩家 B 音色（女声 `zh-CN-XiaoxiaoNeural`）。
-- `MainActivity.kt` 的 `textIndex` 按攻方归属选择区间（A 取 0..4，B 取 5..9），实现"谁走子就播谁的声音"。
-- 文案列表位于 `MainActivity.kt` 的 companion object，与项目根目录 `generate_tts.py` 中的 `TEXTS` 必须保持一致；改文案后运行 `python generate_tts.py` 重新生成全部音频。
+## 4. 裁决语音 (TTS) 多方言与搞笑音效切换系统
+- **方言与音色配置**: 语音支持 4 种方言切换：
+  * **普通话 (0)**: A 玩家男声 `zh-CN-YunxiNeural`，B 玩家女声 `zh-CN-XiaoxiaoNeural`。
+  * **四川话 (1)**: 采用 A 男声 `zh-CN-YunxiNeural`，B 女声 `zh-CN-XiaoxiaoNeural` 朗读专门拟合四川普通话风格的特色川味搞笑文案。
+  * **河南话 (2)**: 采用 A 男声 `zh-CN-YunxiNeural` 朗读河南话搞笑文案，B 女声采用关中风味 `zh-CN-shaanxi-XiaoniNeural` 朗读豪爽有趣的文案。
+  * **粤语 (3)**: A 玩家港风男声 `zh-HK-WanLungNeural`，B 玩家港风女声 `zh-HK-HiuMaanNeural` 朗读纯粤语魔性搞笑对决文案。
+- **动态音效切换与持久化**: 对弈阶段 (`GameStage.PLAYING`)，主屏 A 与副屏 B 会在“更换背景”后显现“更换音效”按钮，各自点击可独立循环切换己方播报音效，并通过 `SharedPreferences` 的 `voice_index_a` 和 `voice_index_b` 保存配置，启动时通过 `applyInitialVoice()` 自动读取。
+- **音频资源与对决关联**: 音频文件位于 `app/src/main/res/raw/tts_{result}_{dialect_index}_{voice_index}.mp3`，共 160 个。在 `MainActivity.moveOrAttack()` 发生碰子对决时，根据攻方当前的方言配置，通过 `SoundPool` 并发零延迟播放，并同步更新双屏对决弹窗文字。
+- **文案一致性**: 搞笑文案列表位于 `MainActivity.kt` 伴生对象中，必须与项目根目录 `generate_tts.py` 中的 `TEXT_DATA` 字典保持严格一致。修改后需重新运行 `python generate_tts.py` 生成对应音频。
 
 ## 5. 构建与测试说明
 - 项目可以直接通过 Android Studio 点击 Run 运行。

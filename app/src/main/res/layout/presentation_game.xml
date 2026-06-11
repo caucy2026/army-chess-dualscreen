@@ -150,6 +150,21 @@
                     android:text="@string/change_bg_btn_text"
                     android:backgroundTint="@color/cell_hq"
                     android:textColor="@color/text_secondary" />
+
+                <Button
+                    android:id="@+id/btn_change_voice"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:textSize="12sp"
+                    android:text="更换音效"
+                    android:backgroundTint="@color/cell_hq"
+                    android:textColor="@color/text_secondary"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <!-- 玩家 B 的待部署托盘 -->
