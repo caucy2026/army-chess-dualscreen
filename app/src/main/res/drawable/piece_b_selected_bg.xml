@@ -1,37 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 选中态：极光绿强光晕（双层扩散） -->
+    <!-- 1. 最外层：大范围强弥散发光光晕（极光绿荧光） -->
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="10dp"/>
-            <solid android:color="#5939FF14"/>
+            <corners android:radius="13dp"/>
+            <solid android:color="#4D39FF14"/>
         </shape>
     </item>
-    <item android:top="1.5dp" android:left="1.5dp" android:right="1.5dp" android:bottom="1.5dp">
+    
+    <!-- 2. 第二层：渐浓的近身强发光光晕 -->
+    <item android:top="1dp" android:left="1dp" android:right="1dp" android:bottom="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp"/>
+            <solid android:color="#BF39FF14"/>
+        </shape>
+    </item>
+    
+    <!-- 3. 第三层：陶瓷底部深色阴影/底座厚度 -->
+    <item android:top="5dp" android:left="3dp" android:right="3dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="10dp"/>
+            <solid android:color="#022C22"/>
+        </shape>
+    </item>
+
+    <!-- 4. 第四层：主体瓷质基底（翡翠绿玉） -->
+    <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="10dp"/>
+            <gradient 
+                android:startColor="#059669" 
+                android:centerColor="#34D399" 
+                android:endColor="#065F46" 
+                android:angle="270" />
+        </shape>
+    </item>
+    
+    <!-- 5. 第五层：菲涅尔透光边缘（高亮绿白瓷釉描边） -->
+    <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="10dp"/>
+            <stroke android:width="1.2dp" android:color="#ECFDF5"/>
+            <solid android:color="#00000000"/>
+        </shape>
+    </item>
+
+    <!-- 6. 第六层：陶瓷球面高光（强聚光，模拟强反光球面） -->
+    <item android:top="3.5dp" android:left="3.5dp" android:right="3.5dp" android:bottom="5.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="9dp"/>
-            <solid android:color="#8C39FF14"/>
+            <gradient 
+                android:type="radial"
+                android:gradientRadius="45dp"
+                android:centerX="0.25"
+                android:centerY="0.25"
+                android:startColor="#E6FFFFFF"
+                android:endColor="#00FFFFFF"/>
         </shape>
     </item>
-    <!-- 白色亮边 -->
-    <item android:top="3dp" android:left="3dp" android:right="3dp" android:bottom="3dp">
+    
+    <!-- 7. 第七层：镜面偏光（顶部弧形渐变，增强高透亮光） -->
+    <item android:top="3.5dp" android:left="3.5dp" android:right="3.5dp" android:bottom="5.5dp">
         <shape android:shape="rectangle">
-            <corners android:radius="7dp"/>
-            <solid android:color="#FFFFFF"/>
-        </shape>
-    </item>
-    <!-- 极光绿发光主体 -->
-    <item android:top="4.5dp" android:left="4.5dp" android:right="4.5dp" android:bottom="4.5dp">
-        <shape android:shape="rectangle">
-            <corners android:radius="6dp"/>
-            <gradient android:startColor="#16A34A" android:centerColor="#86EFAC" android:endColor="#15803D" android:angle="315"/>
-        </shape>
-    </item>
-    <!-- 顶部玻璃高光 -->
-    <item android:top="4.5dp" android:left="4.5dp" android:right="4.5dp" android:bottom="4.5dp">
-        <shape android:shape="rectangle">
-            <corners android:radius="6dp"/>
-            <gradient android:startColor="#80FFFFFF" android:centerColor="#00FFFFFF" android:endColor="#00FFFFFF" android:centerY="0.38" android:angle="270"/>
+            <corners android:radius="9dp"/>
+            <gradient 
+                android:startColor="#66FFFFFF" 
+                android:centerColor="#00FFFFFF" 
+                android:endColor="#00FFFFFF" 
+                android:centerY="0.45" 
+                android:angle="270"/>
         </shape>
     </item>
 </layer-list>

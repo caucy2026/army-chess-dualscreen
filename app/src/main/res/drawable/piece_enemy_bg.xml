@@ -1,44 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 外发光光晕（由外向内渐浓） -->
+    <!-- 1. 最外层：大范围弥散光晕（玛瑙红） -->
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="10dp"/>
+            <corners android:radius="13dp"/>
+            <solid android:color="#1AF43F5E"/>
+        </shape>
+    </item>
+    
+    <!-- 2. 第二层：渐浓的近身光晕 -->
+    <item android:top="1dp" android:left="1dp" android:right="1dp" android:bottom="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp"/>
             <solid android:color="#33F43F5E"/>
         </shape>
     </item>
-    <item android:top="1.5dp" android:left="1.5dp" android:right="1.5dp" android:bottom="1.5dp">
+    
+    <!-- 3. 第三层：陶瓷底部深色阴影/底座厚度 -->
+    <item android:top="5dp" android:left="3dp" android:right="3dp" android:bottom="2dp">
         <shape android:shape="rectangle">
-            <corners android:radius="9dp"/>
-            <solid android:color="#59F43F5E"/>
-        </shape>
-    </item>
-    <!-- 立体底座投影 -->
-    <item android:top="5.5dp" android:left="3dp" android:right="3dp" android:bottom="3dp">
-        <shape android:shape="rectangle">
-            <corners android:radius="7dp"/>
+            <corners android:radius="10dp"/>
             <solid android:color="#4C0519"/>
         </shape>
     </item>
-    <!-- 金属包边（亮→暗斜面） -->
-    <item android:top="3dp" android:left="3dp" android:right="3dp" android:bottom="5.5dp">
+
+    <!-- 4. 第四层：主体瓷质基底（红玛瑙） -->
+    <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
-            <corners android:radius="7dp"/>
-            <gradient android:startColor="#FECDD3" android:centerColor="#FB7185" android:endColor="#9F1239" android:angle="270"/>
+            <corners android:radius="10dp"/>
+            <gradient 
+                android:startColor="#881337" 
+                android:centerColor="#E11D48" 
+                android:endColor="#9F1239" 
+                android:angle="270" />
         </shape>
     </item>
-    <!-- 珐琅主体（斜向流光：暗→亮带→暗） -->
-    <item android:top="4.2dp" android:left="4.2dp" android:right="4.2dp" android:bottom="6.7dp">
+    
+    <!-- 5. 第五层：菲涅尔透光边缘（极细半透明白色瓷釉描边） -->
+    <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
-            <corners android:radius="6dp"/>
-            <gradient android:startColor="#BE123C" android:centerColor="#FB7185" android:endColor="#881337" android:angle="315"/>
+            <corners android:radius="10dp"/>
+            <stroke android:width="1dp" android:color="#80FFFFFF"/>
+            <solid android:color="#00000000"/>
         </shape>
     </item>
-    <!-- 顶部玻璃高光 -->
-    <item android:top="4.2dp" android:left="4.2dp" android:right="4.2dp" android:bottom="6.7dp">
+
+    <!-- 6. 第六层：陶瓷球面高光（左上角径向聚光，模拟围棋等球面反光） -->
+    <item android:top="3.5dp" android:left="3.5dp" android:right="3.5dp" android:bottom="5.5dp">
         <shape android:shape="rectangle">
-            <corners android:radius="6dp"/>
-            <gradient android:startColor="#66FFFFFF" android:centerColor="#00FFFFFF" android:endColor="#00FFFFFF" android:centerY="0.38" android:angle="270"/>
+            <corners android:radius="9dp"/>
+            <gradient 
+                android:type="radial"
+                android:gradientRadius="45dp"
+                android:centerX="0.25"
+                android:centerY="0.25"
+                android:startColor="#B3FFFFFF"
+                android:endColor="#00FFFFFF"/>
+        </shape>
+    </item>
+    
+    <!-- 7. 第七层：镜面偏光（顶部弧形渐变，增强通透玻璃感） -->
+    <item android:top="3.5dp" android:left="3.5dp" android:right="3.5dp" android:bottom="5.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="9dp"/>
+            <gradient 
+                android:startColor="#4DFFFFFF" 
+                android:centerColor="#00FFFFFF" 
+                android:endColor="#00FFFFFF" 
+                android:centerY="0.45" 
+                android:angle="270"/>
         </shape>
     </item>
 </layer-list>

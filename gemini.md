@@ -12,6 +12,8 @@
 - **沉浸式全屏**: 在主屏与副屏的 `onCreate()` 中，通过 `WindowInsetsControllerCompat` 移除了状态栏与导航栏，实现了纯净的沉浸式全屏游戏体验。
 - **应用图标**: 采用精简扁平化（Flat Vector）的军事元素陆战棋图标（替换了 `mipmap` 目录下的图标），并将应用更名为“陆战棋”。
 - **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空（**已移除"无背景"档**，按钮不再循环回极简灰）。**启动背景持久化**：用 SharedPreferences（文件 `game_prefs`，主屏 key `bg_index_a`、副屏 `bg_index_b`）保存上次所选背景；各屏 `applyInitialBackground()` 在 `onCreate` 读取并应用——有记录则恢复，无记录/读到无背景则随机选一张兜底，确保启动不再是极简灰。场景图位于 `res/drawable-nodpi/bg_scene_1..4.png`，由根目录 `gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
+- **棋子玉石陶瓷质感**: 棋子背景（`piece_a_bg.xml`、`piece_b_bg.xml`、`piece_enemy_bg.xml` 等）采用多层 `layer-list` 渲染，包含大范围弥散光晕、3D 立体底座阴影、主体渐变、1dp 菲涅尔边缘半透明瓷釉描边，以及左上角径向球面聚光（`radial gradient`）和顶部偏光玻璃高光，模拟出温润的青瓷、琥珀金和红玛瑙陶瓷光影，选中状态则配以强烈的冰蓝和极光绿荧光氛围。
+
 
 ## 3. 核心游戏状态与已知修复
 - **行军轨迹残留问题**: `MainActivity.kt` 内的 `lastMoveFrom` 和 `lastMoveTo` 负责记录并高亮上一回合的棋子移动轨迹。在每次游戏重置 (`initGameData()`) 时，必须确保将其清空为 `null`，否则上一局的残影会遗留在棋盘上（已修复）。
