@@ -51,10 +51,11 @@
 
 ## 第六轮（优化上一步移动高亮框尺寸与圆角）
 
-- [x] 调整行军轨迹高亮框的外边距：在 `view_board_cell.xml` 中为 `v_last_move_highlight` 加上 `android:layout_margin="2dp"`，精确控制其尺寸只比棋子（`layout_margin="3dp"`）在四周各宽出 1dp（即高度和宽度比棋子大 2dp/2像素）
-- [x] 优化行军轨迹高亮框的圆角半径：在 `last_move_bg.xml` 中将 `corners android:radius` 从 `4dp` 调整为 `14dp`，以完美贴合白玉陶瓷棋子的优雅圆角
+- [x] 调整行军轨迹高亮框的外边距：在 `view_board_cell.xml` 中为 `v_last_move_highlight` 加上 `android:layout_margin="2.5dp"`，精确控制其尺寸只比棋子（`layout_margin="3dp"`）在四周各宽出 0.5dp（即高度和宽度比棋子大 1dp，在 320dpi 主屏上刚好是 1 个物理像素）
+- [x] 优化行军轨迹高亮框的圆角半径：在 `last_move_bg.xml` 中将 `corners android:radius` 从 `4dp` 调整为 `13.5dp`，以完美贴合白玉陶瓷棋子的优雅圆角
 - [x] 运行 Gradle 构建，编译并完成实机部署验证
 - [x] 提交全部修改到 Git 库
+
 
 
 
