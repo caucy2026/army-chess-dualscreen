@@ -57,10 +57,10 @@ def generate_ink_landscape(top_color, mountain_colors, sun_color, seed, draw_pet
     im = Image.new("RGBA", (W, H), top_color)
     d = ImageDraw.Draw(im, "RGBA")
     
-    # 1. 绘制落日/朝阳
+    # 1. 绘制落日/朝阳 (移到左侧，避免棋盘中心重合影响下棋)
     if sun_color:
         random.seed(seed)
-        sun_x = random.randint(int(W * 0.55), int(W * 0.75))
+        sun_x = random.randint(int(W * 0.1), int(W * 0.25))
         sun_y = random.randint(int(H * 0.18), int(H * 0.32))
         r = random.randint(35, 50)
         for i in range(r, 0, -1):
@@ -81,12 +81,12 @@ def generate_ink_landscape(top_color, mountain_colors, sun_color, seed, draw_pet
             layer = layer.filter(ImageFilter.GaussianBlur(blur_radii[i]))
         im = Image.alpha_composite(im, layer)
         
-    # 3. 绘制飞鸟
+    # 3. 绘制飞鸟 (移到中右侧)
     d = ImageDraw.Draw(im, "RGBA")
     random.seed(seed + 88)
     bird_color = (mountain_colors[-1][0], mountain_colors[-1][1], mountain_colors[-1][2], 160)
     for _ in range(random.randint(4, 7)):
-        bx = random.randint(int(W * 0.15), int(W * 0.45))
+        bx = random.randint(int(W * 0.35), int(W * 0.65))
         by = random.randint(int(H * 0.12), int(H * 0.38))
         size = random.randint(4, 7)
         d.line([(bx - size, by - size // 2), (bx, by), (bx + size, by - size // 2)], fill=bird_color, width=1)
