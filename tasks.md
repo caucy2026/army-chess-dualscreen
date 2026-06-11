@@ -40,3 +40,13 @@
 - [x] 同步更新 CLAUDE.md 与 gemini.md 视觉与排版设计小节
 - [x] 提交全部更改并记录到 ui_review.md
 
+## 第五轮（修复副屏 B 棋子主题字体不一致缺陷）
+
+- [x] 修复棋盘格棋子字体锁定：在 `view_board_cell.xml` 的 `tv_piece_text` 中显式指定 `android:fontFamily="@font/zcool_kuaile"`
+- [x] 修复对决卡片字体锁定：在 `dialog_battle.xml` 和 `presentation_game.xml` 中为对决的卡片绑定 `android:fontFamily="@font/zcool_kuaile"`
+- [x] 修复动态托盘字体注入：重构 `MainActivity.kt` 和 `GamePresentation.kt` 的 `TrayAdapter`，用 `ResourcesCompat.getFont` 动态加载并注入 `customTypeface`，解决 Presentation Window 独立 Context 不继承默认主题字体问题
+- [x] 运行 Gradle 构建，编译验证并完成实机部署
+- [x] 同步更新 CLAUDE.md 与 gemini.md
+- [x] 提交全部修改到 Git 库
+
+

@@ -8,7 +8,7 @@
 
 ## 2. 视觉与排版设计 (UI/UX)
 - **全局风格**: 采用苹果极简风格（Apple Minimalist）。背景色使用纯净灰（`#F2F2F7`），卡片控件采用高透纯白弥散阴影（Frosted Glass/亚克力质感，见 `glass_panel_bg.xml`）。
-- **主题字体**: 全局采用开源的中文字体「站酷快乐体 (ZCOOL KuaiLe)」，文件位于 `app/src/main/res/font/zcool_kuaile.ttf`，在 `themes.xml` 中被设定为全局默认字体，营造欢快、休闲的游玩氛围。
+- **主题字体**: 全局采用开源的中文字体「站酷快乐体 (ZCOOL KuaiLe)」，文件位于 `app/src/main/res/font/zcool_kuaile.ttf`，在 `themes.xml` 中被设定为全局默认字体，营造欢快、休闲的游玩氛围。由于副屏 (Presentation) 的独立 Window Context 默认不继承主屏 Theme 全局字体，因此已通过在棋子布局 (`view_board_cell.xml`)、战斗对决布局 (`dialog_battle.xml`、`presentation_game.xml`) 中显式指定 `android:fontFamily`，以及在主副屏托盘适配器 (`TrayAdapter`) 中通过代码动态应用 `ResourcesCompat.getFont`，来确保双屏所有棋子字体完全一致。
 - **沉浸式全屏**: 在主屏与副屏的 `onCreate()` 中，通过 `WindowInsetsControllerCompat` 移除了状态栏与导航栏，实现了纯净的沉浸式全屏游戏体验。
 - **应用图标**: 采用精简扁平化（Flat Vector）的军事元素陆战棋图标（替换了 `mipmap` 目录下的图标），并将应用更名为“陆战棋”。
 - **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空 → 春意江南 → 桃林春晓 → 樱花漫舞 → 幽谷兰香 → 山水田园（**已移除"无背景"档**）。**启动背景持久化**: 用 SharedPreferences（文件 `game_prefs`，主屏 key `bg_index_a`、副屏 `bg_index_b`）保存上次所选背景；各屏 `applyInitialBackground()` 在 `onCreate` 读取并应用——有记录则恢复，无记录/读到无背景则随机选一张兜底，确保启动不再是极简灰。场景图位于 `res/drawable-nodpi/bg_scene_1..9.png`，由根目录 `gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。

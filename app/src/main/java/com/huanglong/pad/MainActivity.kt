@@ -1148,6 +1148,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val customTypeface = androidx.core.content.res.ResourcesCompat.getFont(parent.context, R.font.zcool_kuaile)
             val tv = TextView(parent.context).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1155,7 +1156,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 gravity = android.view.Gravity.CENTER
                 textSize = 15f
-                typeface = android.graphics.Typeface.defaultFromStyle(android.graphics.Typeface.BOLD)
+                typeface = customTypeface
                 setPadding(4, 4, 4, 4)
             }
             return ViewHolder(tv)
