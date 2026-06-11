@@ -31,4 +31,8 @@
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="gray">#8E8E93</color>
+    
+    <!-- 优化后棋子瓷器字体的特定颜色 -->
+    <color name="piece_text_a">#0284C7</color> <!-- A天青蓝字 -->
+    <color name="piece_text_b">#EA580C</color> <!-- B活力橙字 -->
 </resources>

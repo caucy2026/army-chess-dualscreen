@@ -733,7 +733,7 @@ class MainActivity : AppCompatActivity() {
         // 渲染攻方（碰子瞬间亮明攻方身份）
         if (attacker.owner == Player.A) {
             tvAttacker.text = attacker.type.displayName
-            tvAttacker.setTextColor(ContextCompat.getColor(this, R.color.white))
+            tvAttacker.setTextColor(ContextCompat.getColor(this, R.color.piece_text_a))
             tvAttacker.setBackgroundResource(R.drawable.piece_a_bg)
         } else {
             tvAttacker.text = ""
@@ -743,7 +743,7 @@ class MainActivity : AppCompatActivity() {
         // 渲染防守方：暗棋裁决不公开身份，仅显示锁 🔒
         if (defender.owner == Player.A) {
             tvDefender.text = defender.type.displayName
-            tvDefender.setTextColor(ContextCompat.getColor(this, R.color.white))
+            tvDefender.setTextColor(ContextCompat.getColor(this, R.color.piece_text_a))
             tvDefender.setBackgroundResource(R.drawable.piece_a_bg)
         } else {
             tvDefender.text = ""
@@ -1103,7 +1103,7 @@ class MainActivity : AppCompatActivity() {
                 if (piece.owner == Player.A) {
                     // 己方：明子
                     tvPiece.setBackgroundResource(R.drawable.piece_a_bg)
-                    tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
+                    tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_a))
                     if (selectedCellA == pos) {
                         tvPiece.setBackgroundResource(R.drawable.piece_a_selected_bg)
                     }
@@ -1111,15 +1111,15 @@ class MainActivity : AppCompatActivity() {
                     // 敌方：暗子
                     if (gameStage == GameStage.FINISHED) {
                         tvPiece.setBackgroundResource(R.drawable.piece_b_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.black))
+                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_b))
                     } else if (piece.type == PieceType.FLAG && revealedFlagOwners.contains(piece.owner)) {
-                        // 司令阵亡，敌方军旗强制亮明（保留文字"军旗"，红底天窗）
+                        // 司令阵亡，敌方军旗强制亮明
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
+                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_b))
                     } else {
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
                         tvPiece.text = ""
-                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.white))
+                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_b))
                     }
                 }
             } else {
@@ -1168,10 +1168,10 @@ class MainActivity : AppCompatActivity() {
 
             if (selected?.id == piece.id) {
                 tv.setBackgroundResource(R.drawable.piece_a_selected_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.black))
+                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_a))
             } else {
                 tv.setBackgroundResource(R.drawable.piece_a_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.white))
+                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_a))
             }
 
             tv.setOnClickListener { onSelect(piece) }

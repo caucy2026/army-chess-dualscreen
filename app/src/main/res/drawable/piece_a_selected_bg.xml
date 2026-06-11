@@ -16,22 +16,22 @@
         </shape>
     </item>
     
-    <!-- 3. 第三层：陶瓷底部深色阴影/底座厚度 -->
+    <!-- 3. 第三层：陶瓷底部深色阴影/底座厚度（深冷灰底座） -->
     <item android:top="5dp" android:left="3dp" android:right="3dp" android:bottom="2dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
-            <solid android:color="#083344"/>
+            <solid android:color="#3F474A"/>
         </shape>
     </item>
 
-    <!-- 4. 第四层：主体瓷质基底（冰蓝荧玉） -->
+    <!-- 4. 第四层：主体瓷质基底（冷脂白玉瓷-选中高透） -->
     <item android:top="2.5dp" android:left="2.5dp" android:right="2.5dp" android:bottom="4.5dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp"/>
             <gradient 
-                android:startColor="#0891B2" 
-                android:centerColor="#22D3EE" 
-                android:endColor="#0E7490" 
+                android:startColor="#F0FDFA" 
+                android:centerColor="#FFFDF9" 
+                android:endColor="#D1EAEF" 
                 android:angle="270" />
         </shape>
     </item>

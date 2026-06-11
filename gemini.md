@@ -12,10 +12,10 @@
 - **沉浸式全屏**: 在主屏与副屏的 `onCreate()` 中，通过 `WindowInsetsControllerCompat` 移除了状态栏与导航栏，实现了纯净的沉浸式全屏游戏体验。
 - **应用图标**: 采用精简扁平化（Flat Vector）的军事元素陆战棋图标（替换了 `mipmap` 目录下的图标），并将应用更名为“陆战棋”。
 - **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空 → 春意江南 → 桃林春晓 → 樱花漫舞 → 幽谷兰香 → 山水田园（**已移除"无背景"档**）。**启动背景持久化**: 用 SharedPreferences（文件 `game_prefs`，主屏 key `bg_index_a`、副屏 `bg_index_b`）保存上次所选背景；各屏 `applyInitialBackground()` 在 `onCreate` 读取并应用——有记录则恢复，无记录/读到无背景则随机选一张兜底，确保启动不再是极简灰。场景图位于 `res/drawable-nodpi/bg_scene_1..9.png`，由根目录 `gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
-- **棋子玉石陶瓷质感**: 棋子背景采用多层 `layer-list` 渲染，包含大范围弥散光晕、3D立座阴影、1dp菲涅尔边缘瓷釉描边、球面径向聚光 and 偏光高光，模拟温润逼真的陶瓷光影。
-  * **玩家 A (主屏)**: 汝窑天青釉瓷 (`piece_a_bg.xml`)，配白色字体，选中时 (`piece_a_selected_bg.xml`) 散发冰蓝荧光。
-  * **玩家 B (副屏)**: 象牙白脂玉瓷 (`piece_b_bg.xml`)，配高对比度深碳黑字体以确保极佳的可读性；选中时 (`piece_b_selected_bg.xml`) 维持白玉偏淡翠绿的主体并散发翡翠绿/极光绿荧光。
-  * **敌方暗棋**: 朱砂印泥红瓷 (`piece_enemy_bg.xml`)，采用降低饱和度的国风朱砂红，优雅协调，配白色字体。
+- **棋子玉石陶瓷质感**: 棋子背景采用多层 `layer-list` 渲染，包含大范围弥散光晕、3D立座阴影、1dp菲涅尔边缘瓷釉描边、球面径向聚光 and 偏光高光，模拟温润逼真的陶瓷光影，统一采用白色系玉质瓷质背景。
+  * **玩家 A (主屏)**: Cold白玉脂瓷 (`piece_a_bg.xml`)，配深天青蓝字 (`R.color.piece_text_a`)，选中时 (`piece_a_selected_bg.xml`) 散发冰蓝荧光。
+  * **玩家 B (副屏)**: Warm白玉脂瓷 (`piece_b_bg.xml`)，配活力橙字 (`R.color.piece_text_b`)，选中时 (`piece_b_selected_bg.xml`) 散发翡翠绿/极光绿荧光。
+  * **敌方暗棋**: Ice灰白玉瓷 (`piece_enemy_bg.xml`)，采用色调比明棋稍暗的灰色调陶瓷底色，无文字，高雅且极易识别。
 
 
 ## 3. 核心游戏状态与已知修复

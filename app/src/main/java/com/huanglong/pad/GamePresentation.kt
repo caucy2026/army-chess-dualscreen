@@ -248,7 +248,7 @@ class GamePresentation(
                 if (piece.owner == Player.B) {
                     // 己方棋子：明棋，绿色高亮框
                     tvPiece.setBackgroundResource(R.drawable.piece_b_bg)
-                    tvPiece.setTextColor(ContextCompat.getColor(context, R.color.black))
+                    tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_b))
                     
                     // 如果在对弈阶段是被选中的棋子，增加呼吸灯边框
                     if (selectedCell == pos) {
@@ -259,17 +259,17 @@ class GamePresentation(
                     if (stage == MainActivity.GameStage.FINISHED) {
                         // 如果碰子曝光或游戏结束，亮明
                         tvPiece.setBackgroundResource(R.drawable.piece_a_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.white))
+                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_a))
                     } else if (piece.type == PieceType.FLAG &&
                         mainActivity.revealedFlagOwners.contains(piece.owner)) {
-                        // 司令阵亡，敌方军旗强制亮明（保留文字"军旗"，红底天窗）
+                        // 司令阵亡，敌方军旗强制亮明
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.white))
+                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_a))
                     } else {
                         // 背面朝上 (锁头图标)
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
                         tvPiece.text = ""
-                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.white))
+                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_a))
                     }
                 }
             } else {
@@ -304,7 +304,7 @@ class GamePresentation(
         // 渲染攻方（如果攻方是副屏玩家 B 则亮明，否则保密）
         if (attacker.owner == Player.B) {
             binding.subFighterSelf.text = attacker.type.displayName
-            binding.subFighterSelf.setTextColor(ContextCompat.getColor(context, R.color.black))
+            binding.subFighterSelf.setTextColor(ContextCompat.getColor(context, R.color.piece_text_b))
             binding.subFighterSelf.setBackgroundResource(R.drawable.piece_b_bg)
         } else {
             binding.subFighterSelf.text = ""
@@ -314,7 +314,7 @@ class GamePresentation(
         // 渲染防守方（如果防守方是副屏玩家 B 则亮明，否则保密）
         if (defender.owner == Player.B) {
             binding.subFighterEnemy.text = defender.type.displayName
-            binding.subFighterEnemy.setTextColor(ContextCompat.getColor(context, R.color.black))
+            binding.subFighterEnemy.setTextColor(ContextCompat.getColor(context, R.color.piece_text_b))
             binding.subFighterEnemy.setBackgroundResource(R.drawable.piece_b_bg)
         } else {
             binding.subFighterEnemy.text = ""
@@ -370,10 +370,10 @@ class GamePresentation(
             // 渲染成玩家 B 绿色风格
             if (selected?.id == piece.id) {
                 tv.setBackgroundResource(R.drawable.piece_b_selected_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.black))
+                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_b))
             } else {
                 tv.setBackgroundResource(R.drawable.piece_b_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.black))
+                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_b))
             }
 
             tv.setOnClickListener { onSelect(piece) }
