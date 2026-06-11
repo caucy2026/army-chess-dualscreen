@@ -255,7 +255,7 @@ class MainActivity : AppCompatActivity() {
         R.drawable.bg_scene_1, R.drawable.bg_scene_2, R.drawable.bg_scene_3,
         R.drawable.bg_scene_4, R.drawable.bg_scene_5, R.drawable.bg_scene_6
     )
-    private val bgSceneNames = arrayOf("沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空", "烟雨江南", "泼墨金辉")
+    private val bgSceneNames = arrayOf("沙漠迷彩", "丛林迷彩", "蔚蓝海洋", "静谧星空", "春意江南", "桃林春晓")
     private val bgPrefs by lazy { getSharedPreferences("game_prefs", Context.MODE_PRIVATE) }
     private var bgSceneIndex = -1
 

@@ -52,7 +52,7 @@ def draw_mountain(draw, width, height, y_base, amplitude, color, seed, num_point
     draw.polygon(points, fill=color)
 
 
-def generate_ink_landscape(top_color, mountain_colors, sun_color, seed):
+def generate_ink_landscape(top_color, mountain_colors, sun_color, seed, draw_petals=False):
     # top_color: RGBA 宣纸背景底色
     im = Image.new("RGBA", (W, H), top_color)
     d = ImageDraw.Draw(im, "RGBA")
@@ -99,6 +99,30 @@ def generate_ink_landscape(top_color, mountain_colors, sun_color, seed):
     d.ellipse([boat_x - 1, boat_y - 4, boat_x + 2, boat_y - 1], fill=boat_color)
     d.line([(boat_x + 1, boat_y - 2), (boat_x + 9, boat_y - 6)], fill=boat_color, width=1)
     
+    # 5. 绘制飘落的桃花瓣（为春意增色）
+    if draw_petals:
+        random.seed(seed + 77)
+        pd = ImageDraw.Draw(im, "RGBA")
+        for _ in range(40):
+            px = random.randint(0, W)
+            py = random.randint(0, int(H * 0.75))
+            pw = random.randint(4, 7)
+            ph = random.randint(3, 5)
+            # 桃花瓣颜色：粉嫩色系
+            p_color = (
+                random.randint(240, 255),
+                random.randint(145, 185),
+                random.randint(165, 195),
+                random.randint(140, 200)
+            )
+            # 绘制小花瓣多边形（呈斜水滴形）
+            pd.polygon([
+                (px, py),
+                (px + pw, py + ph // 2),
+                (px + pw // 2, py + ph),
+                (px - pw // 3, py + ph // 2)
+            ], fill=p_color)
+
     return im.convert("RGB")
 
 
@@ -135,31 +159,33 @@ for _ in range(6):
     d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=(255, 255, 255, 240))
 save(im, "bg_scene_4")
 
-# 5. 烟雨江南（水墨黛青）
+# 5. 春意江南 (新绿山水)
 bg5 = generate_ink_landscape(
-    (230, 234, 230, 255), 
+    (240, 246, 242, 255), 
     [
-        (175, 186, 175, 180),
-        (135, 148, 134, 210),
-        (92, 105, 91, 235),
-        (54, 66, 53, 255)
+        (200, 222, 200, 180),
+        (160, 195, 160, 210),
+        (110, 162, 110, 235),
+        (65, 122, 65, 255)
     ], 
-    (208, 100, 80, 100), 
-    28
+    (250, 215, 160, 120), 
+    28,
+    draw_petals=False
 )
 save(bg5, "bg_scene_5")
 
-# 6. 泼墨金辉（金秋水墨）
+# 6. 桃林春晓 (朝晖春色)
 bg6 = generate_ink_landscape(
-    (245, 239, 224, 255), 
+    (254, 250, 242, 255), 
     [
-        (196, 185, 168, 180),
-        (158, 146, 126, 210),
-        (115, 103, 85, 235),
-        (72, 62, 47, 255)
+        (232, 210, 215, 170),
+        (195, 170, 185, 200),
+        (142, 168, 130, 230),
+        (90, 128, 80, 255)
     ], 
-    (229, 162, 51, 100), 
-    45
+    (241, 148, 138, 140), 
+    45,
+    draw_petals=True
 )
 save(bg6, "bg_scene_6")
 
