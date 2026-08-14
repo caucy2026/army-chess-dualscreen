@@ -21,9 +21,9 @@ app/src/main/java/com/huanglong/pad/
 ```
 
 ### 1.2 资源与构建脚本
-* **[strings.xml](file:///E:/pad/app/src/main/res/values/strings.xml)**：包含所有 UI 文本及「📖 游戏规则」面板内的规则描述。
-* **[generate_tts.py](file:///E:/pad/scripts/generate_tts.py)**：方言语音 MP3 素材一键生成脚本，维护或修改文案后须重新运行此脚本。
-* **[gen_bg.py](file:///E:/pad/scripts/gen_bg.py)**：山水、沙漠、丛林等背景图的底层几何与纹理生成脚本。
+* **[strings.xml](file:///E:/army-chess-dualscreen/app/src/main/res/values/strings.xml)**：包含所有 UI 文本及「📖 游戏规则」面板内的规则描述。
+* **[generate_tts.py](file:///E:/army-chess-dualscreen/scripts/generate_tts.py)**：方言语音 MP3 素材一键生成脚本，维护或修改文案后须重新运行此脚本。
+* **[gen_bg.py](file:///E:/army-chess-dualscreen/scripts/gen_bg.py)**：山水、沙漠、丛林等背景图的底层几何与纹理生成脚本。
 * **`app/src/main/res/raw/`**：包含 160 个碰子裁决预置的方言 MP3 音频文件（命名格式 `tts_{result}_{dialect_index}_{voice_index}.mp3`）。
 
 ---

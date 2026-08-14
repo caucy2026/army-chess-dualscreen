@@ -8,7 +8,7 @@ import asyncio
 import edge_tts
 import os
 
-OUT_DIR = r"E:\pad\app\src\main\res\raw"
+OUT_DIR = r"E:\army-chess-dualscreen\app\src\main\res\raw"
 
 VOICES = {
     0: {  # 普通话

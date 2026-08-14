@@ -17,5 +17,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "DoubleScreenChess"
+rootProject.name = "army-chess-dualscreen"
 include ':app'

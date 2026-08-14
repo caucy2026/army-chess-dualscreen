@@ -42,3 +42,6 @@
 - **大本营棋子可移动**: 进入大本营的非军旗棋子可正常移出（标准规则是"进入大本营即锁定守家死子"）。已移除 `GameEngine.isValidMove()` 中的 `if (isHq(from)) return false` 锁定判断；军旗本身仍因属 `FLAG` 类型不可移动。大本营无斜线连接，故只能正交直进直出。
 - **仍保持标准的部分**: 地雷仅能布在己方后两排（含非军旗占据的那个大本营，属标准合法雷位）；夺旗即终局；行营避难不可被吃。
 - **一键布阵生成器（`MainActivity.autoLayout`）**: 入口按己方已布子数分流——已布 1~24（部分布防）走 `incrementalLayout`，只把托盘剩余子合法填入空位、**不动已布子**；已布 0 或 25（空盘/满盘）走 `fullAutoLayout` 整盘收回托盘后重排（满盘即"再点一次换阵"）。`fullAutoLayout` 50% 取预设阵型（`getClassicFormations`，**铁壁/飞花/均衡**三套，按真实棋盘可用行 5/3/4/3/5/5 书写、所见即所得，列翻转 `c→4-c` 真·左右镜像），50% 取受约束随机 `randomTypeLayout`（底层统一为 `constrainedFill`，增量布防亦复用之）。**战术约束（预设与随机一致，见 `GameEngine.satisfiesAutoConstraints`）**：司令必须压最前两排（A: row6-7）、旅长/师长/军长禁第一排（A: row6）；外加军旗入大本营、地雷后两排、炸弹避前两排。生成后用 `verifyLayout` + `satisfiesAutoConstraints` + `hasForbiddenTrappedPiece` 三重兜底重试（增量无解则提示并保持原状）。**注意 `verifyLayout` 刻意不含上述战术约束**——它被玩家手动"完成布阵"共用，战术约束只作用于一键布阵生成器，以免限制玩家手动自由布子。**困死房规**：允许出现困死子，但困死子只能是营长及以下（营长/连长/排长）；工兵、炸弹、以及高于营长的高阶子（团长~司令）不得被己方地雷/军旗围死，详见 `GameEngine.isTrapSensitive`。
+
+## 7. 双屏通用开发经验与踩坑文档
+- 为了后续在此设备上开发其他双屏交互应用，已将本次项目的底层双屏开发经验、防呆脚手架代码以及 ADB 调试命令汇总为独立文档：[DUAL_SCREEN_GUIDE.md](file:///E:/army-chess-dualscreen/docs/DUAL_SCREEN_GUIDE.md)。开发新项目时可直接参考此文档。
