@@ -8,7 +8,7 @@ import math
 from PIL import Image, ImageDraw, ImageFilter
 
 W, H = 960, 640
-OUT = r"E:\army-chess-dualscreen\app\src\main\res\drawable-nodpi"
+OUT = r"E:\KemiArmyChess\app\src\main\res\drawable-nodpi"
 os.makedirs(OUT, exist_ok=True)
 
 

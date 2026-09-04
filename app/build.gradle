@@ -3,6 +3,14 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def releaseSigningPropertiesFile = rootProject.file('signing/k9.release.signing.properties')
+def releaseKeystoreFile = rootProject.file('signing/debug.keystore')
+def releaseSigningProperties = new Properties()
+def hasReleaseSigning = releaseSigningPropertiesFile.exists() && releaseKeystoreFile.exists()
+if (hasReleaseSigning) {
+    releaseSigningPropertiesFile.withInputStream { releaseSigningProperties.load(it) }
+}
+
 android {
     namespace 'com.huanglong.pad'
     compileSdk 33
@@ -11,15 +19,28 @@ android {
         applicationId "com.huanglong.pad"
         minSdk 26
         targetSdk 33
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile releaseKeystoreFile
+                storePassword releaseSigningProperties['k9.release.storePassword']
+                keyAlias releaseSigningProperties['k9.release.keyAlias']
+                keyPassword releaseSigningProperties['k9.release.keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -35,16 +56,18 @@ android {
     }
 }
 
+tasks.configureEach { task ->
+    if (!hasReleaseSigning && task.name in ['assembleRelease', 'bundleRelease', 'packageRelease']) {
+        task.doFirst {
+            throw new GradleException('Release signing files are missing from signing/.')
+        }
+    }
+}
+
 dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    
-    // 协程与 Lifecycle 支持，用于状态管理
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

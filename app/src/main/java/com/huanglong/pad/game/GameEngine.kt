@@ -1,7 +1,6 @@
 package com.huanglong.pad.game
 
-import java.util.LinkedList
-import java.util.Queue
+import java.util.ArrayDeque
 
 /**
  * 碰撞战斗裁决结果
@@ -19,6 +18,10 @@ object GameEngine {
     const val ROWS = 12
     const val COLS = 5
 
+    private val BOARD_POSITIONS = List(ROWS * COLS) { index ->
+        Position(index / COLS, index % COLS)
+    }
+
     // 行营坐标集合 (绝对坐标，以 A 视角为准)
     val CAMPS = setOf(
         Position(2, 1), Position(2, 3), Position(3, 2), Position(4, 1), Position(4, 3),
@@ -33,6 +36,15 @@ object GameEngine {
 
     // 铁路线坐标集合
     val RAILWAYS = initRailways()
+
+    private val RAILWAY_NEIGHBORS: Map<Position, List<Position>> by lazy {
+        RAILWAYS.associateWith { current ->
+            RAILWAYS.filter { next ->
+                Math.abs(current.row - next.row) + Math.abs(current.col - next.col) == 1 &&
+                    isRiverCrossValid(current, next)
+            }
+        }
+    }
 
     private fun initRailways(): Set<Position> {
         val railways = mutableSetOf<Position>()
@@ -129,6 +141,17 @@ object GameEngine {
     }
 
     /**
+     * 返回指定棋子的全部合法目标。棋盘坐标由引擎统一缓存，避免界面层反复创建 Position。
+     */
+    fun validMovesFrom(
+        from: Position,
+        board: Map<Position, ChessPiece>,
+        currentPlayer: Player
+    ): Set<Position> = BOARD_POSITIONS.filterTo(HashSet()) { target ->
+        isValidMove(from, target, board, currentPlayer)
+    }
+
+    /**
      * 判断两个点是否通过公路/行营斜线直接相连（一步距离）
      */
     fun isRoadConnected(from: Position, to: Position): Boolean {
@@ -216,26 +239,18 @@ object GameEngine {
         to: Position,
         board: Map<Position, ChessPiece>
     ): Boolean {
-        val visited = mutableSetOf<Position>()
-        val queue: Queue<Position> = LinkedList()
+        val visited = HashSet<Position>()
+        val queue = ArrayDeque<Position>()
 
-        queue.add(from)
+        queue.addLast(from)
         visited.add(from)
 
-        while (!queue.isEmpty()) {
-            val curr = queue.poll() ?: break
+        while (queue.isNotEmpty()) {
+            val curr = queue.removeFirst()
             if (curr == to) return true
 
-            // 获取周围四个方向相邻的铁路格
-            val dirs = arrayOf(
-                Position(curr.row - 1, curr.col),
-                Position(curr.row + 1, curr.col),
-                Position(curr.row, curr.col - 1),
-                Position(curr.row, curr.col + 1)
-            )
-
-            for (next in dirs) {
-                if (next.isValid() && isRailway(next) && !visited.contains(next) && isRiverCrossValid(curr, next)) {
+            for (next in RAILWAY_NEIGHBORS[curr].orEmpty()) {
+                if (next !in visited) {
                     // 如果是终点，直接允许（哪怕上面有子——吃子或占空地）
                     if (next == to) {
                         return true
@@ -243,7 +258,7 @@ object GameEngine {
                     // 如果不是终点，中途路径必须是空路（没有棋子阻挡）
                     if (!board.containsKey(next)) {
                         visited.add(next)
-                        queue.add(next)
+                        queue.addLast(next)
                     }
                 }
             }
@@ -290,11 +305,7 @@ object GameEngine {
     fun hasAnyValidMove(board: Map<Position, ChessPiece>, player: Player): Boolean {
         for ((from, piece) in board) {
             if (piece.owner != player) continue
-            for (r in 0 until ROWS) {
-                for (c in 0 until COLS) {
-                    if (isValidMove(from, Position(r, c), board, player)) return true
-                }
-            }
+            if (BOARD_POSITIONS.any { isValidMove(from, it, board, player) }) return true
         }
         return false
     }
@@ -330,11 +341,7 @@ object GameEngine {
             if (pc.type == PieceType.LANDMINE || pc.type == PieceType.FLAG) obstacles[p] = pc
         }
         obstacles[from] = board[from] ?: return true
-        for (r in 0 until ROWS) {
-            for (c in 0 until COLS) {
-                if (isValidMove(from, Position(r, c), obstacles, player)) return false
-            }
-        }
+        if (BOARD_POSITIONS.any { isValidMove(from, it, obstacles, player) }) return false
         return true
     }
 

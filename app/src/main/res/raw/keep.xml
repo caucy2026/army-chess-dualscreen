@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 裁决语音按资源名动态加载，显式保留以兼容未来启用资源压缩的 Release 构建。 -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/tts_*" />

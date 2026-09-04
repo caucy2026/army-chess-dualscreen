@@ -6,8 +6,14 @@
     <string name="reset_btn_text">重新开始</string>
     <string name="change_bg_btn_text">更换背景</string>
     <string name="auto_layout_btn_text">一键布阵</string>
+    <string name="change_voice_btn_text">更换音效</string>
+    <string name="game_initializing">游戏正在初始化...</string>
+    <string name="waiting_both_players">等待双方玩家就绪...</string>
+    <string name="waiting_main_display">等待主屏开启连接...</string>
+    <string name="piece_tray_hint">待部署棋子 (点击选中，再点棋盘放置)</string>
+    <string name="battle_judging">正在进行战斗判定...</string>
     <string name="battle_vs_title">战局裁决</string>
     <string name="vs_text">VS</string>
     <string name="rules_title">📖 游戏规则</string>
-    <string name="game_rules_text">🎯 获胜目标\n夺取对方军旗，或令对方无棋可走。\n\n⚔️ 棋子大小\n司令＞军长＞师长＞旅长＞团长＞营长＞连长＞排长＞工兵；同级相碰同归于尽。\n\n💣 炸弹\n与任何棋子相碰均同归于尽。\n\n💥 地雷\n不能移动；除工兵排雷外，任何棋子碰雷均与地雷同归于尽（工兵碰雷则工兵存活、地雷消失）。\n\n🛤 铁路与公路\n铁路上可直线行进任意格（途中不可有子阻挡），工兵在铁路上可拐弯；公路一次只能走一格。\n\n⛺ 行营\n米字斜线交叉点；营内棋子不可被攻击，营内有子时不可进入。\n\n🏠 大本营\n进入大本营的棋子（非军旗）仍可正常移出。大本营无斜线连接，只能正交直进直出。\n\n🕵 全程暗棋\n碰子不亮明身份，胜负当场裁决；司令阵亡后其军旗强制亮明。\n\n🔄 重新开始\n需双方各自点击「重新开始」确认后才会重开棋局。\n\n📝 布局规则\n炸弹不可放在第一排；地雷只能放在最后两排；军旗必须放在大本营；行营内不能布子。</string>
+    <string name="game_rules_text">🎯 获胜目标\n夺取对方军旗，或令对方无棋可走。\n\n⚔️ 棋子大小\n司令＞军长＞师长＞旅长＞团长＞营长＞连长＞排长＞工兵；同级相碰同归于尽。\n\n💣 炸弹\n与任何棋子相碰均同归于尽。\n\n💥 地雷\n不能移动；除工兵排雷外，任何棋子碰雷均与地雷同归于尽（工兵碰雷则工兵存活、地雷消失）。\n\n🛤 铁路与公路\n铁路上可直线行进任意格（途中不可有子阻挡），工兵在铁路上可拐弯；公路一次只能走一格。\n\n⛺ 行营\n米字斜线交叉点；营内棋子不可被攻击，营内有子时不可进入。\n\n🏠 大本营\n进入大本营的棋子（非军旗）仍可正常移出。大本营无斜线连接，只能正交直进直出。\n\n🕵 全程暗棋\n碰子不亮明身份，胜负当场裁决；司令阵亡后其军旗强制亮明。\n\n🔄 重新开始\n需双方各自点击「重新开始」确认后才会重开棋局。\n\n📝 布局规则\n炸弹不可放在最前两排；地雷只能放在最后两排；军旗必须放在大本营；行营内不能布子。</string>
 </resources>

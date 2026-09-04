@@ -34,7 +34,9 @@
 
 ## 5. 构建与测试说明
 - 项目可以直接通过 Android Studio 点击 Run 运行。
-- 如果通过命令行，请使用 Gradle 构建命令：`gradle assembleDebug`，随后使用 `adb install` 推送到双屏 Android 设备。
+- 如果通过命令行，请使用仓库自带的 Gradle Wrapper：`.\gradlew.bat testDebugUnitTest lintDebug assembleDebug`，随后使用 `adb install` 推送到双屏 Android 设备。
+- 正式发布使用 `.\gradlew.bat testDebugUnitTest lintDebug assembleRelease`，输出为 `app/build/outputs/apk/release/app-release.apk`。Release 构建从本地 `signing/` 读取签名材料；该目录已被 Git 忽略。每次发布必须递增 `versionCode`，并永久保留、持续使用同一份签名密钥。
+- 应用启动后由 `AppUpdateManager` 调用 KEMI 公开更新接口。发现更新时优先打开 `kemiappstore://` 商城详情，商城不可用时使用 `DownloadManager` 下载 HTTPS APK、校验服务端 SHA-256，并通过 `FileProvider` 交给系统安装器。
 
 ## 6. 规则变体（房规，刻意偏离标准陆战棋）
 裁决与走法实现于 `game/GameEngine.kt` 与 `game/Models.kt`。以下两条为**有意采用的房规**，请勿当作 bug 改回标准规则：

@@ -12,6 +12,10 @@
 
 # 本地环境配置（含本机 SDK 路径，勿提交）
 local.properties
+signing/
+signing.zip
+*.jks
+*.keystore
 
 # IDE
 /.idea/
@@ -24,3 +28,4 @@ Thumbs.db
 
 # 调试临时文件（uiautomator dump 等）
 window_dump.xml
+*.hprof

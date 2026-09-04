@@ -3,15 +3,10 @@ package com.huanglong.pad
 import android.app.Presentation
 import android.content.Context
 import android.view.Display
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.GridLayout
-import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.huanglong.pad.databinding.PresentationGameBinding
 import com.huanglong.pad.game.*
 
@@ -24,8 +19,9 @@ class GamePresentation(
 ) : Presentation(mainActivity, outerDisplay) {
 
     private lateinit var binding: PresentationGameBinding
-    private val cells = HashMap<Position, View>()
-    private var trayAdapter: TrayAdapter? = null
+    private val cells = HashMap<Position, BoardCellViews>()
+    private var trayAdapter: PieceTrayAdapter? = null
+    private var battleHideRunnable: Runnable? = null
 
     override fun onCreate(androidBundle: android.os.Bundle?) {
         super.onCreate(androidBundle)
@@ -53,6 +49,19 @@ class GamePresentation(
         refreshUI()
     }
 
+    override fun onStop() {
+        if (::binding.isInitialized) {
+            tipHideRunnable?.let { binding.tvTip.removeCallbacks(it) }
+            battleHideRunnable?.let { binding.battleOverlay.removeCallbacks(it) }
+            binding.subFighterSelf.animate().cancel()
+            binding.subFighterEnemy.animate().cancel()
+            binding.battleCard.animate().cancel()
+        }
+        tipHideRunnable = null
+        battleHideRunnable = null
+        super.onStop()
+    }
+
     /**
      * 初始化 12x5 交互网格
      */
@@ -63,6 +72,7 @@ class GamePresentation(
         for (r in 0 until GameEngine.ROWS) {
             for (c in 0 until GameEngine.COLS) {
                 val cellView = layoutInflater.inflate(R.layout.view_board_cell, grid, false)
+                val cell = BoardCellViews(cellView)
 
                 // 副屏以 B 视角渲染：逻辑坐标经 reverse() 映射到物理网格，
                 // 使 B 的布防区 (逻辑 Row 0-5) 落在画布下半区，与背景视角一致
@@ -76,7 +86,7 @@ class GamePresentation(
                 }
                 cellView.layoutParams = params
 
-                cells[logicPos] = cellView
+                cells[logicPos] = cell
 
                 // 设置格子点击监听，点击时将逻辑位置回传给 MainActivity 处理
                 cellView.setOnClickListener {
@@ -92,9 +102,11 @@ class GamePresentation(
      */
     private fun initTrayRecyclerView() {
         binding.rvPieceTray.layoutManager = androidx.recyclerview.widget.GridLayoutManager(context, 2)
-        trayAdapter = TrayAdapter { piece ->
-            mainActivity.onTrayPieceSelected(piece, Player.B)
-        }
+        trayAdapter = PieceTrayAdapter(
+            normalBackground = R.drawable.piece_b_bg,
+            selectedBackground = R.drawable.piece_b_selected_bg,
+            textColor = R.color.piece_text_b
+        ) { piece -> mainActivity.onTrayPieceSelected(piece, Player.B) }
         binding.rvPieceTray.adapter = trayAdapter
     }
 
@@ -144,18 +156,18 @@ class GamePresentation(
     }
 
     fun playMoveAnimation(from: Position, to: Position) {
-        val sourceCell = cells[from] as? android.view.ViewGroup
+        val sourceCell = cells[from]
         val targetCell = cells[to]
         if (sourceCell == null || targetCell == null) return
-        
-        val tvSource = sourceCell.findViewById<android.widget.TextView>(R.id.tv_piece_text)
+        val sourceRoot = sourceCell.root as? ViewGroup ?: return
+        val tvSource = sourceCell.piece
         
         binding.boardGridLayout.clipChildren = false
-        sourceCell.clipChildren = false
-        sourceCell.bringToFront()
+        sourceRoot.clipChildren = false
+        sourceRoot.bringToFront()
         
-        val dx = targetCell.x - sourceCell.x
-        val dy = targetCell.y - sourceCell.y
+        val dx = targetCell.root.x - sourceRoot.x
+        val dy = targetCell.root.y - sourceRoot.y
         
         tvSource.animate()
             .translationX(dx)
@@ -166,7 +178,7 @@ class GamePresentation(
                 tvSource.translationX = 0f
                 tvSource.translationY = 0f
                 binding.boardGridLayout.clipChildren = true
-                sourceCell.clipChildren = true
+                sourceRoot.clipChildren = true
             }
             .start()
     }
@@ -225,25 +237,26 @@ class GamePresentation(
         val highlights = mainActivity.highlightedTargets
         val selectedCell = mainActivity.selectedCellB
 
-        for ((pos, cellView) in cells) {
-            val tvPiece = cellView.findViewById<TextView>(R.id.tv_piece_text)
-            val vHighlight = cellView.findViewById<View>(R.id.v_cell_highlight)
+        val highlightColor = ContextCompat.getColor(context, R.color.color_b)
+        val pieceTextColorA = ContextCompat.getColor(context, R.color.piece_text_a)
+        val pieceTextColorB = ContextCompat.getColor(context, R.color.piece_text_b)
+        for ((pos, cell) in cells) {
+            val tvPiece = cell.piece
             val piece = board[pos]
 
             // 渲染高亮行军路径
             if (highlights.contains(pos)) {
-                vHighlight.visibility = View.VISIBLE
-                vHighlight.background?.setTint(ContextCompat.getColor(context, R.color.color_b))
+                cell.targetHighlight.visibility = View.VISIBLE
+                cell.targetHighlight.background?.setTint(highlightColor)
             } else {
-                vHighlight.visibility = View.GONE
+                cell.targetHighlight.visibility = View.GONE
             }
 
             // 渲染最后一步高亮
-            val vLastMove = cellView.findViewById<android.view.View>(R.id.v_last_move_highlight)
             if (pos == mainActivity.lastMoveFrom || pos == mainActivity.lastMoveTo) {
-                vLastMove.visibility = View.VISIBLE
+                cell.lastMoveHighlight.visibility = View.VISIBLE
             } else {
-                vLastMove.visibility = View.GONE
+                cell.lastMoveHighlight.visibility = View.GONE
             }
 
             // 渲染棋子
@@ -255,7 +268,7 @@ class GamePresentation(
                 if (piece.owner == Player.B) {
                     // 己方棋子：明棋，绿色高亮框
                     tvPiece.setBackgroundResource(R.drawable.piece_b_bg)
-                    tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_b))
+                    tvPiece.setTextColor(pieceTextColorB)
                     
                     // 如果在对弈阶段是被选中的棋子，增加呼吸灯边框
                     if (selectedCell == pos) {
@@ -266,17 +279,17 @@ class GamePresentation(
                     if (stage == MainActivity.GameStage.FINISHED) {
                         // 如果碰子曝光或游戏结束，亮明
                         tvPiece.setBackgroundResource(R.drawable.piece_a_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_a))
+                        tvPiece.setTextColor(pieceTextColorA)
                     } else if (piece.type == PieceType.FLAG &&
                         mainActivity.revealedFlagOwners.contains(piece.owner)) {
                         // 司令阵亡，敌方军旗强制亮明
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_a))
+                        tvPiece.setTextColor(pieceTextColorA)
                     } else {
                         // 背面朝上 (锁头图标)
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
                         tvPiece.text = ""
-                        tvPiece.setTextColor(ContextCompat.getColor(context, R.color.piece_text_a))
+                        tvPiece.setTextColor(pieceTextColorA)
                     }
                 }
             } else {
@@ -334,61 +347,12 @@ class GamePresentation(
 
         binding.battleOverlay.visibility = View.VISIBLE
         BattleAnim.play(binding.battleCard, binding.subFighterSelf, binding.subFighterEnemy, scale)
-        binding.battleOverlay.postDelayed({
+        battleHideRunnable?.let { binding.battleOverlay.removeCallbacks(it) }
+        val hide = Runnable {
             binding.battleOverlay.visibility = View.GONE
-        }, 2500)
+        }
+        battleHideRunnable = hide
+        binding.battleOverlay.postDelayed(hide, 2500)
     }
 
-    /**
-     * 棋子托盘 RecyclerView 适配器
-     */
-    private class TrayAdapter(
-        private val onSelect: (ChessPiece) -> Unit
-    ) : RecyclerView.Adapter<TrayAdapter.ViewHolder>() {
-
-        private var list = listOf<ChessPiece>()
-        private var selected: ChessPiece? = null
-
-        fun updateList(newList: List<ChessPiece>, selectedPiece: ChessPiece?) {
-            this.list = newList
-            this.selected = selectedPiece
-            notifyDataSetChanged()
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val customTypeface = androidx.core.content.res.ResourcesCompat.getFont(parent.context, R.font.zcool_kuaile)
-            val tv = TextView(parent.context).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    parent.context.resources.getDimensionPixelSize(R.dimen.piece_tray_height)
-                )
-                gravity = android.view.Gravity.CENTER
-                textSize = 15f
-                typeface = customTypeface
-                setPadding(4, 4, 4, 4)
-            }
-            return ViewHolder(tv)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val piece = list[position]
-            val tv = holder.itemView as TextView
-            tv.text = piece.type.displayName
-
-            // 渲染成玩家 B 绿色风格
-            if (selected?.id == piece.id) {
-                tv.setBackgroundResource(R.drawable.piece_b_selected_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_b))
-            } else {
-                tv.setBackgroundResource(R.drawable.piece_b_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_b))
-            }
-
-            tv.setOnClickListener { onSelect(piece) }
-        }
-
-        override fun getItemCount(): Int = list.size
-
-        class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
-    }
 }

@@ -2,18 +2,15 @@
 <resources>
     <!-- 苹果极简风：干净的背景色 (iOS 系统背景色) -->
     <color name="bg_dark">#F2F2F7</color>
-    <color name="bg_panel">#FFFFFF</color>
     <color name="border_color">#E5E5EA</color>
 
     <!-- 玩家 A: 科技蓝 (Apple Blue) -->
     <color name="color_a">#007AFF</color>
     <color name="color_a_glow">#34C759</color>
-    <color name="color_a_bg">#E5F1FF</color>
 
     <!-- 玩家 B: 活力橙 (Apple Orange) -->
     <color name="color_b">#FF9500</color>
     <color name="color_b_glow">#FFCC00</color>
-    <color name="color_b_bg">#FFF4E5</color>
 
     <!-- 战力判定: 警示红 (Apple Red) -->
     <color name="color_vs">#FF3B30</color>
@@ -23,15 +20,11 @@
     <color name="text_secondary">#8E8E93</color>
 
     <!-- 棋盘网格特定颜色 (极简亚克力质感) -->
-    <color name="cell_station">#FFFFFF</color>
     <color name="cell_railway">#C7C7CC</color>
-    <color name="cell_camp">#E5E5EA</color>
     <color name="cell_hq">#D1D1D6</color>
     
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
-    <color name="gray">#8E8E93</color>
-    
     <!-- 优化后棋子瓷器字体的特定颜色 -->
     <color name="piece_text_a">#0284C7</color> <!-- A天青蓝字 -->
     <color name="piece_text_b">#EA580C</color> <!-- B活力橙字 -->

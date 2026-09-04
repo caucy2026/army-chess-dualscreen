@@ -97,6 +97,9 @@ class BoardBackgroundView @JvmOverloads constructor(
         strokeWidth = 5f
     }
 
+    private val cellRect = RectF()
+    private val innerCellRect = RectF()
+
     // 8. 各种文字画笔
     private val labelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#57534E") // 兵站、大本营背景文字颜色 (灰色)
@@ -111,6 +114,20 @@ class BoardBackgroundView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
         letterSpacing = 0.05f
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (w <= 0 || h <= 0) return
+        val cellHeight = h.toFloat() / GameEngine.ROWS
+        val riverY = 6 * cellHeight
+        val bandHalf = cellHeight * 0.46f
+        riverBandPaint.shader = LinearGradient(
+            0f, riverY - bandHalf, 0f, riverY + bandHalf,
+            intArrayOf(0x001E293B, 0x4D24344F, 0x001E293B),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -139,76 +156,39 @@ class BoardBackgroundView @JvmOverloads constructor(
         campPaint.color = themeColor
         hqPaint.color = themeColor
 
-        // 1. 初始化 12x5 交互交点
-        val points = Array(GameEngine.ROWS) { r ->
-            Array(GameEngine.COLS) { c ->
-                PointF(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
-            }
+        // 根据当前玩家视角把逻辑坐标映射为画布中心点，不在绘制热路径分配对象。
+        fun centerX(pos: Position): Float {
+            val col = if (perspective == Player.A) pos.col else GameEngine.COLS - 1 - pos.col
+            return col * cellW + cellW / 2f
         }
 
-        // 根据当前玩家视角对物理交点进行映射
-        fun getPhysPoint(pos: Position): PointF {
-            val drawPos = if (perspective == Player.A) pos else pos.reverse()
-            return points[drawPos.row][drawPos.col]
+        fun centerY(pos: Position): Float {
+            val row = if (perspective == Player.A) pos.row else GameEngine.ROWS - 1 - pos.row
+            return row * cellH + cellH / 2f
         }
 
         // 2. 界河横带底色（物理上永远位于画布纵向正中第 5/6 行之间，先画垫底）
         val riverY = 6 * cellH
         val bandHalf = cellH * 0.46f
-        riverBandPaint.shader = LinearGradient(
-            0f, riverY - bandHalf, 0f, riverY + bandHalf,
-            intArrayOf(0x001E293B, 0x4D24344F, 0x001E293B),
-            floatArrayOf(0f, 0.5f, 1f),
-            Shader.TileMode.CLAMP
-        )
         canvas.drawRect(0f, riverY - bandHalf, w, riverY + bandHalf, riverBandPaint)
 
         // 3. 绘制公路普通连线 (斜线与直线)
-        for (r in 0 until GameEngine.ROWS) {
-            for (c in 0 until GameEngine.COLS) {
-                val fromPos = Position(r, c)
-                val targets = listOf(
-                    Position(r + 1, c),
-                    Position(r, c + 1),
-                    Position(r + 1, c + 1),
-                    Position(r + 1, c - 1)
-                )
-                for (toPos in targets) {
-                    if (toPos.isValid() && GameEngine.isRoadConnected(fromPos, toPos)) {
-                        val pFrom = getPhysPoint(fromPos)
-                        val pTo = getPhysPoint(toPos)
-                        canvas.drawLine(pFrom.x, pFrom.y, pTo.x, pTo.y, roadPaint)
-                    }
-                }
-            }
+        for ((from, to) in ROAD_SEGMENTS) {
+            canvas.drawLine(centerX(from), centerY(from), centerX(to), centerY(to), roadPaint)
         }
 
         // 4. 绘制黑白相间发光铁轨线
-        val railwayLines = mutableListOf<Pair<Position, Position>>()
-        // 纵向铁路：左右两侧边线 (Col 0/4) 纵贯 Row 1..10
-        for (c in listOf(0, 4)) {
-            for (r in 1 until 10) {
-                railwayLines.add(Pair(Position(r, c), Position(r + 1, c)))
-            }
-        }
-        // 中央 Col 2 铁路仅有跨越山界的一段 (Row 5 - Row 6)，半场内为公路
-        railwayLines.add(Pair(Position(5, 2), Position(6, 2)))
-        // 横向铁路 (Row 1, 5, 6, 10；Col 0..4)
-        for (r in listOf(1, 5, 6, 10)) {
-            for (c in 0 until 4) {
-                railwayLines.add(Pair(Position(r, c), Position(r, c + 1)))
-            }
-        }
-
-        for (pair in railwayLines) {
-            val p1 = getPhysPoint(pair.first)
-            val p2 = getPhysPoint(pair.second)
+        for ((from, to) in RAILWAY_SEGMENTS) {
+            val x1 = centerX(from)
+            val y1 = centerY(from)
+            val x2 = centerX(to)
+            val y2 = centerY(to)
             // (1) 绘制发光霓虹外圈
-            canvas.drawLine(p1.x, p1.y, p2.x, p2.y, railGlowPaint)
+            canvas.drawLine(x1, y1, x2, y2, railGlowPaint)
             // (2) 绘制铁路基座黑色实线
-            canvas.drawLine(p1.x, p1.y, p2.x, p2.y, railBasePaint)
+            canvas.drawLine(x1, y1, x2, y2, railBasePaint)
             // (3) 绘制相间象牙白枕木虚线 (DashPathEffect)
-            canvas.drawLine(p1.x, p1.y, p2.x, p2.y, railTrackPaint)
+            canvas.drawLine(x1, y1, x2, y2, railTrackPaint)
         }
 
         // 5. 绘制 60 个棋盘网格单元的外框（兵站、大本营、行营底色）
@@ -216,39 +196,37 @@ class BoardBackgroundView @JvmOverloads constructor(
         val rectW = cellW * 0.78f
         val rectH = cellH * 0.56f
 
-        for (r in 0 until GameEngine.ROWS) {
-            for (c in 0 until GameEngine.COLS) {
-                val pos = Position(r, c)
-                val center = getPhysPoint(pos)
+        for (pos in BOARD_POSITIONS) {
+                val x = centerX(pos)
+                val y = centerY(pos)
 
                 // 物理坐标框范围
-                val left = center.x - rectW / 2f
-                val top = center.y - rectH / 2f
-                val right = center.x + rectW / 2f
-                val bottom = center.y + rectH / 2f
-                val rect = RectF(left, top, right, bottom)
+                val left = x - rectW / 2f
+                val top = y - rectH / 2f
+                val right = x + rectW / 2f
+                val bottom = y + rectH / 2f
+                cellRect.set(left, top, right, bottom)
 
                 if (GameEngine.isCamp(pos)) {
                     // 绘制行营：虚线圆圈，底色浅黑
                     val radius = Math.min(cellW, cellH) * 0.30f
-                    canvas.drawCircle(center.x, center.y, radius, stationFillPaint)
-                    canvas.drawCircle(center.x, center.y, radius, campPaint)
+                    canvas.drawCircle(x, y, radius, stationFillPaint)
+                    canvas.drawCircle(x, y, radius, campPaint)
                     // canvas.drawText("行营", center.x, center.y + 10f, labelTextPaint)
                 } else if (GameEngine.isHq(pos)) {
                     // 绘制大本营：双线盾形卡框
-                    canvas.drawRoundRect(rect, 12f, 12f, stationFillPaint)
-                    canvas.drawRoundRect(rect, 12f, 12f, hqPaint)
+                    canvas.drawRoundRect(cellRect, 12f, 12f, stationFillPaint)
+                    canvas.drawRoundRect(cellRect, 12f, 12f, hqPaint)
                     // 内层环线
-                    val innerRect = RectF(left + 6f, top + 6f, right - 6f, bottom - 6f)
-                    canvas.drawRoundRect(innerRect, 8f, 8f, hqPaint)
+                    innerCellRect.set(left + 6f, top + 6f, right - 6f, bottom - 6f)
+                    canvas.drawRoundRect(innerCellRect, 8f, 8f, hqPaint)
                     // canvas.drawText("大本营", center.x, center.y + 10f, labelTextPaint)
                 } else {
                     // 绘制普通兵站：圆角矩形灰色框，底框写字
-                    canvas.drawRoundRect(rect, 6f, 6f, stationFillPaint)
-                    canvas.drawRoundRect(rect, 6f, 6f, stationBorderPaint)
+                    canvas.drawRoundRect(cellRect, 6f, 6f, stationFillPaint)
+                    canvas.drawRoundRect(cellRect, 6f, 6f, stationBorderPaint)
                     // canvas.drawText("兵站", center.x, center.y + 10f, labelTextPaint)
                 }
-            }
         }
 
         // 6. 绘制山界圆圈（Col 1 与 Col 3 处山岭阻断，不可通行，对应标准棋盘的两个"山界"）
@@ -286,5 +264,32 @@ class BoardBackgroundView @JvmOverloads constructor(
         // 8. 棋盘霓虹圆角外框（按视角主题色淡淡描边收束整体）
         frameGlowPaint.color = (themeColor and 0x00FFFFFF) or 0x59000000
         canvas.drawRoundRect(4f, 4f, w - 4f, h - 4f, 20f, 20f, frameGlowPaint)
+    }
+
+    private companion object {
+        val BOARD_POSITIONS = List(GameEngine.ROWS * GameEngine.COLS) { index ->
+            Position(index / GameEngine.COLS, index % GameEngine.COLS)
+        }
+
+        val ROAD_SEGMENTS = buildList {
+            for (from in BOARD_POSITIONS) {
+                for (to in BOARD_POSITIONS) {
+                    val rowDelta = to.row - from.row
+                    val colDelta = to.col - from.col
+                    val isForwardSegment = rowDelta > 0 || (rowDelta == 0 && colDelta > 0)
+                    if (isForwardSegment && GameEngine.isRoadConnected(from, to)) add(from to to)
+                }
+            }
+        }
+
+        val RAILWAY_SEGMENTS = buildList {
+            for (col in intArrayOf(0, 4)) {
+                for (row in 1 until 10) add(Position(row, col) to Position(row + 1, col))
+            }
+            add(Position(5, 2) to Position(6, 2))
+            for (row in intArrayOf(1, 5, 6, 10)) {
+                for (col in 0 until 4) add(Position(row, col) to Position(row, col + 1))
+            }
+        }
     }
 }

@@ -8,20 +8,16 @@ import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.Display
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.GridLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.huanglong.pad.databinding.ActivityMainBinding
 import com.huanglong.pad.game.*
 import java.util.UUID
@@ -29,8 +25,9 @@ import java.util.UUID
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val cells = HashMap<Position, View>()
-    private var trayAdapter: TrayAdapter? = null
+    private lateinit var appUpdateManager: AppUpdateManager
+    private val cells = HashMap<Position, BoardCellViews>()
+    private var trayAdapter: PieceTrayAdapter? = null
 
     // 游戏全局会话状态
     enum class GameStage { LAYOUT, PLAYING, FINISHED }
@@ -77,12 +74,14 @@ class MainActivity : AppCompatActivity() {
     private var sndClash = 0
     private var sndBoom = 0
     private var sndWin = 0
+    private var battleDialog: AlertDialog? = null
 
     // 本地裁决搞笑语音音效 ID（按 [dialectIndex][voiceIndex] 存放）
-    private val sndTtsAttackerWon = Array(4) { mutableListOf<Int>() }
-    private val sndTtsDefenderWon = Array(4) { mutableListOf<Int>() }
-    private val sndTtsBothDied = Array(4) { mutableListOf<Int>() }
-    private val sndTtsFlagCaptured = Array(4) { mutableListOf<Int>() }
+    private val sndTtsAttackerWon = Array(DIALECT_COUNT) { IntArray(VOICE_CLIP_COUNT) }
+    private val sndTtsDefenderWon = Array(DIALECT_COUNT) { IntArray(VOICE_CLIP_COUNT) }
+    private val sndTtsBothDied = Array(DIALECT_COUNT) { IntArray(VOICE_CLIP_COUNT) }
+    private val sndTtsFlagCaptured = Array(DIALECT_COUNT) { IntArray(VOICE_CLIP_COUNT) }
+    private val loadedDialects = BooleanArray(DIALECT_COUNT)
 
     // 玩家 A 和 B 独立选择的音效方言索引（0 普通话, 1 四川话, 2 河南话, 3 粤语）
     private val voiceNames = arrayOf("普通话", "四川话", "河南话", "粤语")
@@ -136,14 +135,22 @@ class MainActivity : AppCompatActivity() {
         // 配置主屏棋盘背景为玩家 A (冰蓝) 视角
         binding.boardBackgroundView.perspective = Player.A
 
+        applyInitialVoice()
         initSound()
         initGameData()
         initBoardGrid()
         initTrayRecyclerView()
         setupListeners()
         applyInitialBackground()
-        applyInitialVoice()
         refreshUI()
+
+        appUpdateManager = AppUpdateManager(this)
+        binding.root.post { appUpdateManager.start() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::appUpdateManager.isInitialized) appUpdateManager.onResume()
     }
 
     override fun onStart() {
@@ -161,6 +168,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        if (::binding.isInitialized) {
+            tipHideRunnable?.let { binding.tvTip.removeCallbacks(it) }
+        }
+        tipHideRunnable = null
+        battleDialog?.dismiss()
+        battleDialog = null
+        if (::appUpdateManager.isInitialized) appUpdateManager.destroy()
+
         super.onDestroy()
         soundPool?.release()
         soundPool = null
@@ -224,6 +239,7 @@ class MainActivity : AppCompatActivity() {
         for (r in 0 until GameEngine.ROWS) {
             for (c in 0 until GameEngine.COLS) {
                 val cellView = layoutInflater.inflate(R.layout.view_board_cell, grid, false)
+                val cell = BoardCellViews(cellView)
                 val params = GridLayout.LayoutParams().apply {
                     width = 0
                     height = 0
@@ -233,7 +249,7 @@ class MainActivity : AppCompatActivity() {
                 cellView.layoutParams = params
 
                 val logicPos = Position(r, c)
-                cells[logicPos] = cellView
+                cells[logicPos] = cell
 
                 // 点击单元格监听 (主屏以 Player A 视角接收)
                 cellView.setOnClickListener {
@@ -249,9 +265,11 @@ class MainActivity : AppCompatActivity() {
      */
     private fun initTrayRecyclerView() {
         binding.rvPieceTray.layoutManager = GridLayoutManager(this, 2)
-        trayAdapter = TrayAdapter { piece ->
-            onTrayPieceSelected(piece, Player.A)
-        }
+        trayAdapter = PieceTrayAdapter(
+            normalBackground = R.drawable.piece_a_bg,
+            selectedBackground = R.drawable.piece_a_selected_bg,
+            textColor = R.color.piece_text_a
+        ) { piece -> onTrayPieceSelected(piece, Player.A) }
         binding.rvPieceTray.adapter = trayAdapter
     }
 
@@ -275,8 +293,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyInitialVoice() {
-        voiceIndexA = bgPrefs.getInt("voice_index_a", 0)
-        voiceIndexB = bgPrefs.getInt("voice_index_b", 0)
+        voiceIndexA = bgPrefs.getInt("voice_index_a", 0).takeIf { it in voiceNames.indices } ?: 0
+        voiceIndexB = bgPrefs.getInt("voice_index_b", 0).takeIf { it in voiceNames.indices } ?: 0
     }
 
     private fun setupListeners() {
@@ -301,7 +319,9 @@ class MainActivity : AppCompatActivity() {
         }
         // 更换音效
         binding.btnChangeVoice.setOnClickListener {
-            voiceIndexA = (voiceIndexA + 1) % 4
+            voiceIndexA = (voiceIndexA + 1) % DIALECT_COUNT
+            loadDialectIfNeeded(voiceIndexA)
+            loadDialectIfNeeded((voiceIndexA + 1) % DIALECT_COUNT)
             bgPrefs.edit().putInt("voice_index_a", voiceIndexA).apply()
             showToast("音效：${voiceNames[voiceIndexA]}", Player.A)
         }
@@ -311,7 +331,9 @@ class MainActivity : AppCompatActivity() {
      * 玩家 B 更换音效
      */
     fun changeVoiceB() {
-        voiceIndexB = (voiceIndexB + 1) % 4
+        voiceIndexB = (voiceIndexB + 1) % DIALECT_COUNT
+        loadDialectIfNeeded(voiceIndexB)
+        loadDialectIfNeeded((voiceIndexB + 1) % DIALECT_COUNT)
         bgPrefs.edit().putInt("voice_index_b", voiceIndexB).apply()
         showToast("音效：${voiceNames[voiceIndexB]}", Player.B)
         gamePresentation?.showTip("音效：${voiceNames[voiceIndexB]}")
@@ -478,20 +500,25 @@ class MainActivity : AppCompatActivity() {
      * 2. 阶段：行军及碰撞交互处理
      */
     fun playMoveAnimation(from: Position, to: Position, onComplete: () -> Unit) {
-        val sourceCell = cells[from] as? android.view.ViewGroup
+        val sourceCell = cells[from]
         val targetCell = cells[to]
         if (sourceCell == null || targetCell == null) {
             onComplete()
             return
         }
-        val tvSource = sourceCell.findViewById<android.widget.TextView>(R.id.tv_piece_text)
+        val sourceRoot = sourceCell.root as? ViewGroup
+        if (sourceRoot == null) {
+            onComplete()
+            return
+        }
+        val tvSource = sourceCell.piece
         
         binding.boardGridLayout.clipChildren = false
-        sourceCell.clipChildren = false
-        sourceCell.bringToFront()
+        sourceRoot.clipChildren = false
+        sourceRoot.bringToFront()
         
-        val dx = targetCell.x - sourceCell.x
-        val dy = targetCell.y - sourceCell.y
+        val dx = targetCell.root.x - sourceRoot.x
+        val dy = targetCell.root.y - sourceRoot.y
         
         tvSource.animate()
             .translationX(dx)
@@ -502,7 +529,7 @@ class MainActivity : AppCompatActivity() {
                 tvSource.translationX = 0f
                 tvSource.translationY = 0f
                 binding.boardGridLayout.clipChildren = true
-                sourceCell.clipChildren = true
+                sourceRoot.clipChildren = true
                 lastMoveFrom = from
                 lastMoveTo = to
                 onComplete()
@@ -532,47 +559,37 @@ class MainActivity : AppCompatActivity() {
                 
                 // 计算该子所有可行的目标落脚点
                 highlightedTargets.clear()
-                for (r in 0 until GameEngine.ROWS) {
-                    for (c in 0 until GameEngine.COLS) {
-                        val target = Position(r, c)
-                        if (GameEngine.isValidMove(pos, target, boardState, clicker)) {
-                            highlightedTargets.add(target)
-                        }
-                    }
-                }
+                highlightedTargets.addAll(GameEngine.validMovesFrom(pos, boardState, clicker))
             }
         } else {
             // 点击目标点，开始移动或攻击
             if (highlightedTargets.contains(pos)) {
-                val sc = selectedCell
-                if (sc != null) {
-                    isAnimating = true
-                    gamePresentation?.playMoveAnimation(sc, pos)
-                    playMoveAnimation(sc, pos) {
-                        isAnimating = false
-                        // 执行动作
-                        moveOrAttack(sc, pos)
+                isAnimating = true
+                gamePresentation?.playMoveAnimation(selectedCell, pos)
+                playMoveAnimation(selectedCell, pos) {
+                    isAnimating = false
+                    // 执行动作
+                    moveOrAttack(selectedCell, pos)
         
                         // 继续走子视为放弃此前单方发起的重置请求
-                        resetRequests.clear()
+                    resetRequests.clear()
         
                         // 清理选择和高亮
-                        clearActions()
+                    clearActions()
         
                         // 转换回合
-                        currentTurn = if (currentTurn == Player.A) Player.B else Player.A
+                    currentTurn = if (currentTurn == Player.A) Player.B else Player.A
         
                         // 标准规则：轮到的一方若无任何合法走法，则判负
-                        if (gameStage == GameStage.PLAYING &&
-                            !GameEngine.hasAnyValidMove(boardState, currentTurn)) {
-                            gameStage = GameStage.FINISHED
-                            winner = if (currentTurn == Player.A) Player.B else Player.A
-                            winReason = "${if (currentTurn == Player.A) "玩家 A" else "玩家 B"} 无棋可走"
-                        }
-                        refreshUI()
+                    if (gameStage == GameStage.PLAYING &&
+                        !GameEngine.hasAnyValidMove(boardState, currentTurn)) {
+                        gameStage = GameStage.FINISHED
+                        winner = if (currentTurn == Player.A) Player.B else Player.A
+                        winReason = "${if (currentTurn == Player.A) "玩家 A" else "玩家 B"} 无棋可走"
                     }
-                    return
+                    refreshUI()
                 }
+                return
             } else {
                 // 取消选择或者更换选中子
                 clearActions()
@@ -609,7 +626,7 @@ class MainActivity : AppCompatActivity() {
             val result = GameEngine.resolveBattle(attacker, defender)
             
             // 交战音效 + 弹出裁决浮窗（主屏 A 与副屏 B 同步显示）
-            playBattleSound(result, attacker.owner)
+            playBattleSound(result)
             
             // 依据攻方玩家选择的方言播放
             val dialect = if (attacker.owner == Player.A) voiceIndexA else voiceIndexB
@@ -663,7 +680,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * 交战音效：依据裁决结果播放不同提示音（夺旗胜利音 / 同归于尽双响 / 普通碰子）
      */
-    private fun playBattleSound(result: BattleResult, attackerPlayer: Player) {
+    private fun playBattleSound(result: BattleResult) {
         val sp = soundPool ?: return
         val id = when (result) {
             BattleResult.FLAG_CAPTURED -> sndWin
@@ -688,20 +705,32 @@ class MainActivity : AppCompatActivity() {
         sndBoom = sp.load(this, R.raw.battle_boom, 1)
         sndWin = sp.load(this, R.raw.battle_win, 1)
 
-        // 加载 4 种方言，每种方言 10 个音频文件
-        for (d in 0 until 4) {
-            for (i in 0 until 10) {
-                val idAtt = resources.getIdentifier("tts_attacker_won_${d}_$i", "raw", packageName)
-                if (idAtt != 0) sndTtsAttackerWon[d].add(sp.load(this, idAtt, 1))
-                val idDef = resources.getIdentifier("tts_defender_won_${d}_$i", "raw", packageName)
-                if (idDef != 0) sndTtsDefenderWon[d].add(sp.load(this, idDef, 1))
-                val idBoth = resources.getIdentifier("tts_both_died_${d}_$i", "raw", packageName)
-                if (idBoth != 0) sndTtsBothDied[d].add(sp.load(this, idBoth, 1))
-                val idFlag = resources.getIdentifier("tts_flag_captured_${d}_$i", "raw", packageName)
-                if (idFlag != 0) sndTtsFlagCaptured[d].add(sp.load(this, idFlag, 1))
-            }
-        }
         soundPool = sp
+        // 启动预载当前方言及循环中的下一种，兼顾首屏负担和切换后的即时播报。
+        setOf(
+            voiceIndexA,
+            voiceIndexB,
+            (voiceIndexA + 1) % DIALECT_COUNT,
+            (voiceIndexB + 1) % DIALECT_COUNT
+        ).forEach(::loadDialectIfNeeded)
+    }
+
+    private fun loadDialectIfNeeded(dialect: Int) {
+        val sp = soundPool ?: return
+        if (dialect !in 0 until DIALECT_COUNT || loadedDialects[dialect]) return
+        loadedDialects[dialect] = true
+
+        for (index in 0 until VOICE_CLIP_COUNT) {
+            sndTtsAttackerWon[dialect][index] = loadRawSample(sp, "tts_attacker_won_${dialect}_$index")
+            sndTtsDefenderWon[dialect][index] = loadRawSample(sp, "tts_defender_won_${dialect}_$index")
+            sndTtsBothDied[dialect][index] = loadRawSample(sp, "tts_both_died_${dialect}_$index")
+            sndTtsFlagCaptured[dialect][index] = loadRawSample(sp, "tts_flag_captured_${dialect}_$index")
+        }
+    }
+
+    private fun loadRawSample(soundPool: SoundPool, resourceName: String): Int {
+        val resourceId = resources.getIdentifier(resourceName, "raw", packageName)
+        return if (resourceId == 0) 0 else soundPool.load(this, resourceId, 1)
     }
 
     /**
@@ -709,17 +738,16 @@ class MainActivity : AppCompatActivity() {
      */
     private fun playTtsVoice(result: BattleResult, dialect: Int, textIndex: Int) {
         val sp = soundPool ?: return
-        val list = when (result) {
+        if (dialect !in 0 until DIALECT_COUNT || textIndex !in 0 until VOICE_CLIP_COUNT) return
+        val clips = when (result) {
             BattleResult.ATTACKER_WON -> sndTtsAttackerWon[dialect]
             BattleResult.DEFENDER_WON -> sndTtsDefenderWon[dialect]
             BattleResult.BOTH_DIED -> sndTtsBothDied[dialect]
             BattleResult.FLAG_CAPTURED -> sndTtsFlagCaptured[dialect]
         }
-        if (list.isNotEmpty() && textIndex < list.size) {
-            val id = list[textIndex]
-            if (id != 0) {
-                sp.play(id, 1f, 1f, 1, 0, 1f)
-            }
+        val id = clips[textIndex]
+        if (id != 0) {
+            sp.play(id, 1f, 1f, 1, 0, 1f)
         }
     }
 
@@ -727,6 +755,9 @@ class MainActivity : AppCompatActivity() {
      * 根据观看方视角生成对决裁决文案（主屏 A 视角 / 副屏 B 视角）
      */
     companion object {
+        private const val DIALECT_COUNT = 4
+        private const val VOICE_CLIP_COUNT = 10
+
         val textAttackerWonDialects = listOf(
             // 0: 普通话
             listOf(
@@ -821,21 +852,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun getBattleResultText(result: BattleResult, dialect: Int, index: Int): String {
+        val safeDialect = dialect.takeIf { it in 0 until DIALECT_COUNT } ?: 0
         return when (result) {
             BattleResult.ATTACKER_WON -> {
-                val list = textAttackerWonDialects[dialect]
+                val list = textAttackerWonDialects[safeDialect]
                 list.getOrElse(index) { list.first() }
             }
             BattleResult.DEFENDER_WON -> {
-                val list = textDefenderWonDialects[dialect]
+                val list = textDefenderWonDialects[safeDialect]
                 list.getOrElse(index) { list.first() }
             }
             BattleResult.BOTH_DIED -> {
-                val list = textBothDiedDialects[dialect]
+                val list = textBothDiedDialects[safeDialect]
                 list.getOrElse(index) { list.first() }
             }
             BattleResult.FLAG_CAPTURED -> {
-                val list = textFlagCapturedDialects[dialect]
+                val list = textFlagCapturedDialects[safeDialect]
                 list.getOrElse(index) { list.first() }
             }
         }
@@ -872,10 +904,12 @@ class MainActivity : AppCompatActivity() {
 
         tvResult.text = resultText
 
+        battleDialog?.dismiss()
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .setCancelable(false)
             .create()
+        battleDialog = dialog
 
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
@@ -890,6 +924,7 @@ class MainActivity : AppCompatActivity() {
         // 2.5秒后自动消失
         dialogView.postDelayed({
             if (dialog.isShowing) dialog.dismiss()
+            if (battleDialog === dialog) battleDialog = null
         }, 2500)
     }
 
@@ -1197,25 +1232,26 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 3. 刷新主屏 60 个棋格与棋子渲染
-        for ((pos, cellView) in cells) {
-            val tvPiece = cellView.findViewById<TextView>(R.id.tv_piece_text)
-            val vHighlight = cellView.findViewById<View>(R.id.v_cell_highlight)
+        val highlightColor = ContextCompat.getColor(this, R.color.color_a)
+        val pieceTextColorA = ContextCompat.getColor(this, R.color.piece_text_a)
+        val pieceTextColorB = ContextCompat.getColor(this, R.color.piece_text_b)
+        for ((pos, cell) in cells) {
+            val tvPiece = cell.piece
             val piece = boardState[pos]
 
             // 渲染行军可达高亮
             if (highlightedTargets.contains(pos)) {
-                vHighlight.visibility = View.VISIBLE
-                vHighlight.background?.setTint(ContextCompat.getColor(this, R.color.color_a))
+                cell.targetHighlight.visibility = View.VISIBLE
+                cell.targetHighlight.background?.setTint(highlightColor)
             } else {
-                vHighlight.visibility = View.GONE
+                cell.targetHighlight.visibility = View.GONE
             }
 
             // 渲染最后一步高亮
-            val vLastMove = cellView.findViewById<View>(R.id.v_last_move_highlight)
             if (pos == lastMoveFrom || pos == lastMoveTo) {
-                vLastMove.visibility = View.VISIBLE
+                cell.lastMoveHighlight.visibility = View.VISIBLE
             } else {
-                vLastMove.visibility = View.GONE
+                cell.lastMoveHighlight.visibility = View.GONE
             }
 
             // 渲染棋子实体
@@ -1226,7 +1262,7 @@ class MainActivity : AppCompatActivity() {
                 if (piece.owner == Player.A) {
                     // 己方：明子
                     tvPiece.setBackgroundResource(R.drawable.piece_a_bg)
-                    tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_a))
+                    tvPiece.setTextColor(pieceTextColorA)
                     if (selectedCellA == pos) {
                         tvPiece.setBackgroundResource(R.drawable.piece_a_selected_bg)
                     }
@@ -1234,15 +1270,15 @@ class MainActivity : AppCompatActivity() {
                     // 敌方：暗子
                     if (gameStage == GameStage.FINISHED) {
                         tvPiece.setBackgroundResource(R.drawable.piece_b_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_b))
+                        tvPiece.setTextColor(pieceTextColorB)
                     } else if (piece.type == PieceType.FLAG && revealedFlagOwners.contains(piece.owner)) {
                         // 司令阵亡，敌方军旗强制亮明
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
-                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_b))
+                        tvPiece.setTextColor(pieceTextColorB)
                     } else {
                         tvPiece.setBackgroundResource(R.drawable.piece_enemy_bg)
                         tvPiece.text = ""
-                        tvPiece.setTextColor(ContextCompat.getColor(this, R.color.piece_text_b))
+                        tvPiece.setTextColor(pieceTextColorB)
                     }
                 }
             } else {
@@ -1252,58 +1288,6 @@ class MainActivity : AppCompatActivity() {
 
         // 4. 同步命令副屏 Presentation 刷新！
         gamePresentation?.refreshUI()
-    }
-
-    /**
-     * 托盘 RecyclerView 的适配器
-     */
-    private class TrayAdapter(
-        private val onSelect: (ChessPiece) -> Unit
-    ) : RecyclerView.Adapter<TrayAdapter.ViewHolder>() {
-
-        private var list = listOf<ChessPiece>()
-        private var selected: ChessPiece? = null
-
-        fun updateList(newList: List<ChessPiece>, selectedPiece: ChessPiece?) {
-            this.list = newList
-            this.selected = selectedPiece
-            notifyDataSetChanged()
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val customTypeface = androidx.core.content.res.ResourcesCompat.getFont(parent.context, R.font.zcool_kuaile)
-            val tv = TextView(parent.context).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    parent.context.resources.getDimensionPixelSize(R.dimen.piece_tray_height)
-                )
-                gravity = android.view.Gravity.CENTER
-                textSize = 15f
-                typeface = customTypeface
-                setPadding(4, 4, 4, 4)
-            }
-            return ViewHolder(tv)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val piece = list[position]
-            val tv = holder.itemView as TextView
-            tv.text = piece.type.displayName
-
-            if (selected?.id == piece.id) {
-                tv.setBackgroundResource(R.drawable.piece_a_selected_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_a))
-            } else {
-                tv.setBackgroundResource(R.drawable.piece_a_bg)
-                tv.setTextColor(ContextCompat.getColor(tv.context, R.color.piece_text_a))
-            }
-
-            tv.setOnClickListener { onSelect(piece) }
-        }
-
-        override fun getItemCount(): Int = list.size
-
-        class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
     }
 
     /**
