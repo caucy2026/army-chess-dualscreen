@@ -217,21 +217,23 @@ mLastPausedActivity: ActivityRecord{... .GamePresentation ...}     ← 副屏那
 
 同时：用户主动退出会重置会话（下次启动开新局），换屏迁移则保留对局。
 
-### 5.6 现场核对朝向的开关
+### 5.6 副屏朝向：已人工确认 180° 正确
 
-副屏到底要不要在应用里补 180°，必须在实体屏上看。为免每次改代码重打包，留了运行时开关：
+副屏要不要在应用里补 180°，只能在实体屏上判定。结论：**补 180° 是对的，保持按投影公式计算**
+（真机肉眼确认，2026-10-20）。
+
+容易误判的一点：系统桌面在 display 2 的 `screencap` 是正的，而补偿后本应用的
+`screencap -d 2` 是倒的。按指南 §2.4，`screencap` 抓的是投影前画面，
+所以「截图倒、面板正」正是补偿生效的表现，不能用截图判断朝向。
+
+现场还想复核时，有运行时开关（已并入状态指纹，改完 1 秒内自动重绑，日志里能看到 version 递增）：
 
 ```powershell
 adb shell setprop debug.acds.content_rotation 0      # 应用不做任何旋转
 adb shell setprop debug.acds.content_rotation 180    # 强制 180
-adb shell setprop debug.acds.content_rotation ""     # 回到按投影公式计算（默认）
+adb shell setprop debug.acds.content_rotation ""     # 回到按投影公式计算（默认，当前取值）
 ```
 
-该属性已并入状态指纹，改完 1 秒内会自动重绑生效，日志里能看到 version 递增。
-
-> 有一条与实际表现冲突的观察：系统桌面在 display 2 的 `screencap` 是正的，而按指南公式
-> 补偿后本应用的 `screencap -d 2` 是倒的。两者不可能同时「面板上正确」，
-> 所以这一条必须人工确认后再定死默认值。
 
 ### 5.7 手势上划 / 切到后台：两扇一起收（已修）
 
