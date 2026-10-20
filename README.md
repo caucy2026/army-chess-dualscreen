@@ -31,6 +31,14 @@ Debug APK 输出到 `app/build/outputs/apk/debug/app-debug.apk`。
 `app/build.gradle` 中的 `versionCode`，并始终使用同一份签名材料；`signing/`、密钥和属性文件
 已被 Git 忽略，禁止提交到仓库。
 
+商城上传用的正式包（会先校验签名指纹、包名与版本，再产出 `*-store.apk` 与 `.sha256`）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build_store_release.ps1
+```
+
+产物在 `build/publish/luzhanqi-<versionName>-<versionCode>-store.apk` 及同名 `.sha256`。
+
 ## 代码结构
 
 - `app/src/main/java/com/huanglong/pad/MainActivity.kt`：玩家 A 窗口、棋局状态入口、音效与双屏协调

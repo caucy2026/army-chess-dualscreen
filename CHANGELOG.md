@@ -51,6 +51,8 @@
 
 ### 其他
 
+- 新增 `scripts/build_store_release.ps1`：构建 → 校验签名指纹/包名/版本 → 产出商城上传用
+  `luzhanqi-<versionName>-<versionCode>-store.apk` 与同名 `.sha256`（产物在 `build/publish/`）。
 - 新增 `docs/DUAL_SCREEN_SYNC.md`（指南条目与实现对照、状态判定规则、实机验证记录与坑位）。
 - 单元测试新增 `PanelMapTest`（22 项），覆盖交换/未交换映射、属性缺失与非法值不猜、
   副屏 displayId 不写死、四种姿态 × 交换组合、A 字不叠加补偿、竖持回退、指纹变化、遮罩准入与日志格式。
