@@ -39,13 +39,24 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="landscape"
-            android:configChanges="orientation|screenSize|keyboardHidden">
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 玩家 B 的窗口。必须是独立 Activity 才能用 launchDisplayId 落到 display 0
+             （交换开启时玩家 B 就在逻辑主屏上）；Presentation 投不到默认屏。
+             独立 taskAffinity 让它自成一个 task，退出时要显式一起关。 -->
+        <activity
+            android:name=".GamePresentation"
+            android:taskAffinity="${applicationId}.white"
+            android:exported="false"
+            android:launchMode="standard"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
     </application>
 
 </manifest>

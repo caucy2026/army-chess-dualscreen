@@ -1,14 +1,22 @@
 # 陆战棋 (Army Chess) 项目文档
 
 ## 1. 架构与双屏显示 (Dual-Screen Architecture)
-本项目为一个支持双屏显示的 Android 原生“陆战棋”应用：
-- **主屏 (Player A)**: 由 `MainActivity.kt` 承载，处理游戏主逻辑、音效（SoundPool）、以及触控交互。
-- **副屏 (Player B)**: 利用 Android `Presentation` API，由 `GamePresentation.kt` 将独立的视图（玩家 B 的翻转视角）投射至另一块物理屏幕。
-- **视图同步**: 主副屏的数据状态存储于 `MainActivity`，并在发生交互后通过 `refreshUI()` 方法同步两端的显示。
+本项目为一个支持双屏显示的 Android 原生“陆战棋”应用，双屏底层按
+[docs/DUAL_SCREEN_SYNC.md](docs/DUAL_SCREEN_SYNC.md)（对齐《KEMI 双屏对战应用适配指南 V1.1》）实现：
+- **玩家 A 窗口**: 由 `MainActivity.kt` 承载，是游戏控制中心，处理主逻辑、音效（SoundPool）与触控交互。
+- **玩家 B 窗口**: `GamePresentation.kt` 是**真正的 Activity**（类名沿用历史名称），独立
+  `taskAffinity`（`${applicationId}.white`），用 `launchDisplayId` 落到目标物理屏。
+  **已弃用 `Presentation` API**：交换开启时玩家 B 的目标是逻辑主屏（display 0），而 `Presentation`
+  不能投到 `DEFAULT_DISPLAY`，实测表现为「另一块屏起不来」。
+- **双屏底层**（`dualscreen/`）：`BattleDisplayActivity`（窗口基类：按映射 `bind()` 迁移窗口、
+  施加内容旋转、中性遮罩、输入闸门）+ `BattleDisplays`（状态指纹、过渡屏障、100ms 采样、双帧提交）、
+  `GameSession`（对局会话单例，换屏迁移不丢局）、`PanelMap`（玩家→屏映射与显示投影换算）、
+  `ExitPolicy`（退出是否连带对方）。落屏与朝向**不写死 display 0/2 与 180°**。
+- **视图同步**: 两个窗口都读 `GameSession`；玩家 B 的交互回传给玩家 A 窗口统一处理，再 `refreshUI()` 同步两端。
 
 ## 2. 视觉与排版设计 (UI/UX)
 - **全局风格**: 采用苹果极简风格（Apple Minimalist）。背景色使用纯净灰（`#F2F2F7`），卡片控件采用高透纯白弥散阴影（Frosted Glass/亚克力质感，见 `glass_panel_bg.xml`）。
-- **主题字体**: 全局采用开源的中文字体「站酷快乐体 (ZCOOL KuaiLe)」，文件位于 `app/src/main/res/font/zcool_kuaile.ttf`，在 `themes.xml` 中被设定为全局默认字体，营造欢快、休闲的游玩氛围。由于副屏 (Presentation) 的独立 Window Context 默认不继承主屏 Theme 全局字体，因此已通过在棋子布局 (`view_board_cell.xml`)、战斗对决布局 (`dialog_battle.xml`、`presentation_game.xml`) 中显式指定 `android:fontFamily`，以及在主副屏托盘适配器 (`TrayAdapter`) 中通过代码动态应用 `ResourcesCompat.getFont`，来确保双屏所有棋子字体完全一致。
+- **主题字体**: 全局采用开源的中文字体「站酷快乐体 (ZCOOL KuaiLe)」，文件位于 `app/src/main/res/font/zcool_kuaile.ttf`，在 `themes.xml` 中被设定为全局默认字体，营造欢快、休闲的游玩氛围。由于两个玩家窗口是各自独立的 Activity，因此已通过在棋子布局 (`view_board_cell.xml`)、战斗对决布局 (`dialog_battle.xml`、`presentation_game.xml`) 中显式指定 `android:fontFamily`，以及在主副屏托盘适配器 (`TrayAdapter`) 中通过代码动态应用 `ResourcesCompat.getFont`，来确保双屏所有棋子字体完全一致。
 - **沉浸式全屏**: 在主屏与副屏的 `onCreate()` 中，通过 `WindowInsetsControllerCompat` 移除了状态栏与导航栏，实现了纯净的沉浸式全屏游戏体验。
 - **应用图标**: 采用精简扁平化（Flat Vector）的军事元素陆战棋图标（替换了 `mipmap` 目录下的图标），并将应用更名为“陆战棋”。
 - **背景场景切换**: 主副屏各有「更换背景」按钮（`btn_change_bg`），各自独立循环切换：沙漠迷彩 → 丛林迷彩 → 蔚蓝海洋 → 静谧星空 → 春意江南 → 桃林春晓 → 樱花漫舞 → 幽谷兰香 → 山水田园（**已移除"无背景"档**）。**启动背景持久化**：用 SharedPreferences（文件 `game_prefs`，主屏 key `bg_index_a`、副屏 `bg_index_b`）保存上次所选背景；各屏 `applyInitialBackground()` 在 `onCreate` 读取并应用——有记录则恢复，无记录/读到无背景则随机选一张兜底，确保启动不再是极简灰。场景图位于 `res/drawable-nodpi/bg_scene_1..9.png`，由 `scripts/gen_bg.py` 生成；半透明玻璃面板（`glass_panel_bg`）令背景透出。
@@ -46,4 +54,7 @@
 - **一键布阵生成器（`MainActivity.autoLayout`）**: 入口按己方已布子数分流——已布 1~24（部分布防）走 `incrementalLayout`，只把托盘剩余子合法填入空位、**不动已布子**；已布 0 或 25（空盘/满盘）走 `fullAutoLayout` 整盘收回托盘后重排（满盘即"再点一次换阵"）。`fullAutoLayout` 50% 取预设阵型（`getClassicFormations`，**铁壁/飞花/均衡**三套，按真实棋盘可用行 5/3/4/3/5/5 书写、所见即所得，列翻转 `c→4-c` 真·左右镜像），50% 取受约束随机 `randomTypeLayout`（底层统一为 `constrainedFill`，增量布防亦复用之）。**战术约束（预设与随机一致，见 `GameEngine.satisfiesAutoConstraints`）**：司令必须压最前两排（A: row6-7）、旅长/师长/军长禁第一排（A: row6）；外加军旗入大本营、地雷后两排、炸弹避前两排。生成后用 `verifyLayout` + `satisfiesAutoConstraints` + `hasForbiddenTrappedPiece` 三重兜底重试（增量无解则提示并保持原状）。**注意 `verifyLayout` 刻意不含上述战术约束**——它被玩家手动"完成布阵"共用，战术约束只作用于一键布阵生成器，以免限制玩家手动自由布子。**困死房规**：允许出现困死子，但困死子只能是营长及以下（营长/连长/排长）；工兵、炸弹、以及高于营长的高阶子（团长~司令）不得被己方地雷/军旗围死，详见 `GameEngine.isTrapSensitive`。
 
 ## 7. 双屏通用开发经验与踩坑文档
-- 为了后续在此设备上开发其他双屏交互应用，已将本次项目的底层双屏开发经验、防呆脚手架代码以及 ADB 调试命令汇总为独立文档：[DUAL_SCREEN_GUIDE.md](file:///E:/army-chess-dualscreen/docs/DUAL_SCREEN_GUIDE.md)。开发新项目时可直接参考此文档。
+- 本项目的双屏实现对照《KEMI 双屏对战应用适配指南 V1.1》，落点、方向、过渡屏障、会话与退出的
+  实现说明与实机验证记录见 [docs/DUAL_SCREEN_SYNC.md](docs/DUAL_SCREEN_SYNC.md)。
+- 更通用的双屏底层经验、防呆脚手架代码与 ADB 调试命令见 [docs/DUAL_SCREEN_GUIDE.md](docs/DUAL_SCREEN_GUIDE.md)。
+- 版本改动记录见 [CHANGELOG.md](CHANGELOG.md)。

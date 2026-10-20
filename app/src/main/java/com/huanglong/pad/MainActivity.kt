@@ -15,14 +15,19 @@ import android.view.ViewGroup
 import android.widget.GridLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import com.huanglong.pad.databinding.ActivityMainBinding
+import com.huanglong.pad.dualscreen.BattleDisplayActivity
+import com.huanglong.pad.dualscreen.BattleDisplays
+import com.huanglong.pad.dualscreen.GameSession
+import com.huanglong.pad.dualscreen.PanelMap
 import com.huanglong.pad.game.*
 import java.util.UUID
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BattleDisplayActivity() {
+
+    override val battlePlayer: Player = Player.A
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var appUpdateManager: AppUpdateManager
@@ -31,43 +36,80 @@ class MainActivity : AppCompatActivity() {
 
     // 游戏全局会话状态
     enum class GameStage { LAYOUT, PLAYING, FINISHED }
-    
-    var gameStage = GameStage.LAYOUT
-    var currentTurn = Player.A
-    var isReadyA = false
-    var isReadyB = false
-    var winner: Player? = null
-    var winReason = ""
+
+    // 对局状态全部委托给 GameSession：交换屏幕时本窗口会被迁移（重建），
+    // 状态挂在 Activity 字段上就会丢局。视图里只留 get() 引用，不留副本。
+    var gameStage: GameStage
+        get() = GameSession.gameStage
+        set(value) { GameSession.gameStage = value }
+    var currentTurn: Player
+        get() = GameSession.currentTurn
+        set(value) { GameSession.currentTurn = value }
+    var isReadyA: Boolean
+        get() = GameSession.isReadyA
+        set(value) { GameSession.isReadyA = value }
+    var isReadyB: Boolean
+        get() = GameSession.isReadyB
+        set(value) { GameSession.isReadyB = value }
+    var winner: Player?
+        get() = GameSession.winner
+        set(value) { GameSession.winner = value }
+    var winReason: String
+        get() = GameSession.winReason
+        set(value) { GameSession.winReason = value }
 
     // 标准规则：司令阵亡后该方军旗强制亮明（记录需亮旗的阵营）
-    val revealedFlagOwners = HashSet<Player>()
+    val revealedFlagOwners: HashSet<Player> get() = GameSession.revealedFlagOwners
 
     // 棋盘数据结构：物理位置映射到棋子对象
-    val boardState = HashMap<Position, ChessPiece>()
+    val boardState: HashMap<Position, ChessPiece> get() = GameSession.boardState
 
     // 托盘中未布置的棋子列表
-    val trayPiecesA = ArrayList<ChessPiece>()
-    val trayPiecesB = ArrayList<ChessPiece>()
+    val trayPiecesA: ArrayList<ChessPiece> get() = GameSession.trayPiecesA
+    val trayPiecesB: ArrayList<ChessPiece> get() = GameSession.trayPiecesB
+
 
     // 布阵阶段当前选中的托盘棋子
-    var selectedPieceA: ChessPiece? = null
-    var selectedPieceB: ChessPiece? = null
+    var selectedPieceA: ChessPiece?
+        get() = GameSession.selectedPieceA
+        set(value) { GameSession.selectedPieceA = value }
+    var selectedPieceB: ChessPiece?
+        get() = GameSession.selectedPieceB
+        set(value) { GameSession.selectedPieceB = value }
 
     // 对弈阶段当前选中的棋盘位置
-    var selectedCellA: Position? = null
-    var selectedCellB: Position? = null
+    var selectedCellA: Position?
+        get() = GameSession.selectedCellA
+        set(value) { GameSession.selectedCellA = value }
+    var selectedCellB: Position?
+        get() = GameSession.selectedCellB
+        set(value) { GameSession.selectedCellB = value }
 
     // 可行军高亮目标点
-    val highlightedTargets = HashSet<Position>()
+    val highlightedTargets: HashSet<Position> get() = GameSession.highlightedTargets
 
-    // 副屏 Presentation 对象
-    private var gamePresentation: GamePresentation? = null
+    // 副屏窗口（玩家 B）是独立 Activity，这里只取当前实例
+    private val gamePresentation: GamePresentation? get() = GamePresentation.instance
+
+    private val displayManager: DisplayManager by lazy {
+        getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+    }
+
+    // 是否已经拉起过玩家 B 窗口，避免重复 startActivity
+    private var secondScreenPending = false
+
+    // 双屏未就绪时停止接收输入
+    private val barrierActive: Boolean get() = !BattleDisplays.ready
 
     // 双边确认重置：已发起重置请求的玩家集合，A/B 都点击重置后才真正重置
-    private val resetRequests = HashSet<Player>()
+    private val resetRequests: HashSet<Player> get() = GameSession.resetRequests
     private var isAnimating = false
-    var lastMoveFrom: Position? = null
-    var lastMoveTo: Position? = null
+    var lastMoveFrom: Position?
+        get() = GameSession.lastMoveFrom
+        set(value) { GameSession.lastMoveFrom = value }
+    var lastMoveTo: Position?
+        get() = GameSession.lastMoveTo
+        set(value) { GameSession.lastMoveTo = value }
 
     // 对决音效播放器 (SoundPool + res/raw 音频)
     private var soundPool: SoundPool? = null
@@ -85,8 +127,12 @@ class MainActivity : AppCompatActivity() {
 
     // 玩家 A 和 B 独立选择的音效方言索引（0 普通话, 1 四川话, 2 河南话, 3 粤语）
     private val voiceNames = arrayOf("普通话", "四川话", "河南话", "粤语")
-    var voiceIndexA = 0
-    var voiceIndexB = 0
+    var voiceIndexA: Int
+        get() = GameSession.voiceIndexA
+        set(value) { GameSession.voiceIndexA = value }
+    var voiceIndexB: Int
+        get() = GameSession.voiceIndexB
+        set(value) { GameSession.voiceIndexB = value }
 
     // 保存进入应用前的自动旋转状态
     private var originalRotationState: Int = -1
@@ -95,10 +141,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // 双屏防呆：从副屏侧桌面启动时系统会把 Activity 分配到副屏 (Display 2)，
-        // 而 Presentation 也固定投向副屏将其覆盖，主屏空白。此处强制迁回主屏 (Display 0) 重启自身。
+        // 副屏窗口也会投到那里，主屏空白。此处强制迁回主屏 (Display 0) 重启自身。
+        //
+        // 但被 BattleDisplays.bind() 按映射迁移出来的实例必须跳过这段：
+        // 交换开启时玩家 A 的正确位置就是 display 2，防呆会把它踢回来并无限循环。
+        val routed = intent?.getBooleanExtra(BattleDisplayActivity.EXTRA_ROUTED, false) == true
         @Suppress("DEPRECATION")
         val launchedDisplayId = windowManager.defaultDisplay.displayId
-        if (launchedDisplayId != Display.DEFAULT_DISPLAY) {
+        if (!routed && launchedDisplayId != Display.DEFAULT_DISPLAY) {
             val options = ActivityOptions.makeBasic()
             options.launchDisplayId = Display.DEFAULT_DISPLAY
             startActivity(
@@ -137,15 +187,55 @@ class MainActivity : AppCompatActivity() {
 
         applyInitialVoice()
         initSound()
-        initGameData()
+        // 迁移（换屏重建）时必须保留对局：只在会话首次建立时发新牌。
+        if (!GameSession.initialized) {
+            initGameData()
+            GameSession.initialized = true
+        }
         initBoardGrid()
         initTrayRecyclerView()
         setupListeners()
         applyInitialBackground()
         refreshUI()
 
+        // 本窗口是游戏控制中心，玩家 B 窗口通过它回传交互
+        GameSession.mainActivity = this
+
         appUpdateManager = AppUpdateManager(this)
         binding.root.post { appUpdateManager.start() }
+    }
+
+    /** 拉起玩家 B 的窗口，直接投到映射算出的目标屏。 */
+    fun ensureSecondScreen(targetDisplayId: Int?) {
+        // 用「是否已挂到 BattleDisplays」判断存活：窗口被暂停/尺寸为 0 时它仍存在，
+        // 但已经不画了，必须重建，不能因为 instance 非空就当作还在。
+        if (BattleDisplays.hasWindow(Player.B)) return
+        if (secondScreenPending) return
+
+        val target = targetDisplayId
+            ?: PanelMap.visiblePanels(displayManager)
+                .firstOrNull { it.displayId != Display.DEFAULT_DISPLAY }?.displayId
+            ?: return
+
+        secondScreenPending = true
+        try {
+            // 先收掉已存在但没挂上的旧窗口，并标记为「替换」而不是退出
+            BattleDisplays.markReplacing(Player.B)
+            GamePresentation.instance?.let { stale ->
+                if (!stale.isFinishing) runCatching { stale.finish() }
+            }
+            val options = ActivityOptions.makeBasic().apply { launchDisplayId = target }
+            startActivity(
+                Intent(this, GamePresentation::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .putExtra(BattleDisplayActivity.EXTRA_ROUTED, true),
+                options.toBundle()
+            )
+        } catch (e: Exception) {
+            android.util.Log.e(BattleDisplayActivity.TAG, "cannot launch player B window", e)
+        } finally {
+            binding.root.postDelayed({ secondScreenPending = false }, 800)
+        }
     }
 
     override fun onResume() {
@@ -155,16 +245,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // 回到前台：自动检测并关联投送副屏，保证两边同时在前台
-        setupDoubleScreen()
+        GameSession.mainActivity = this
         refreshUI()
     }
 
     override fun onStop() {
         super.onStop()
-        // 进入后台：立即关闭副屏投送，保证两边同时在后台，防止副屏残留与内存泄漏
-        gamePresentation?.dismiss()
-        gamePresentation = null
+        // 副屏是独立 Activity，不能在这里关；同生共死由 BattleDisplays/ExitPolicy 处理。
+        if (GameSession.mainActivity === this) GameSession.mainActivity = null
     }
 
     override fun onDestroy() {
@@ -175,6 +263,11 @@ class MainActivity : AppCompatActivity() {
         battleDialog?.dismiss()
         battleDialog = null
         if (::appUpdateManager.isInitialized) appUpdateManager.destroy()
+        if (GameSession.mainActivity === this) GameSession.mainActivity = null
+        // 用户主动退出：下次启动开新局。换屏迁移（moving）不算退出，未就绪时不丢。
+        if (BattleDisplays.isExiting && !isChangingConfigurations) {
+            GameSession.initialized = false
+        }
 
         super.onDestroy()
         soundPool?.release()
@@ -190,6 +283,13 @@ class MainActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
         }
+    }
+
+    /** 面板切换时丢弃进行中的输入与浮层。 */
+    override fun cancelPendingInput() {
+        isAnimating = false
+        if (::binding.isInitialized) binding.root.animate().cancel()
+        gamePresentation?.cancelPendingInput()
     }
 
     /**
@@ -340,28 +440,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 检测外部物理副屏并弹出 Presentation 界面
-     */
-    private fun setupDoubleScreen() {
-        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        val presentationDisplays = displayManager.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
-        
-        if (presentationDisplays.isNotEmpty()) {
-            val targetDisplay = presentationDisplays[0]
-            gamePresentation = GamePresentation(this, targetDisplay).apply {
-                show()
-            }
-            showToast("检测到副屏并成功投送！")
-        } else {
-            showToast("未检测到外部副屏。您可继续在主屏调试。")
-        }
-    }
-
-    /**
      * 双边确认重置：单边点击只发起请求，A/B 双方都点击重置后才真正重开棋局，
      * 防止一方误触清掉对局。无副屏调试模式下单边直接重置。
      */
     fun requestReset(requester: Player) {
+        if (barrierActive) return
         if (gamePresentation == null) {
             resetGame()
             return
@@ -394,6 +477,7 @@ class MainActivity : AppCompatActivity() {
      * 选中托盘棋子回调
      */
     fun onTrayPieceSelected(piece: ChessPiece, player: Player) {
+        if (barrierActive) return
         if (gameStage != GameStage.LAYOUT) return
         
         if (player == Player.A) {
@@ -408,6 +492,7 @@ class MainActivity : AppCompatActivity() {
      * 点击棋盘某个格子的核心处理逻辑
      */
     fun onCellClicked(pos: Position, clicker: Player) {
+        if (barrierActive) return
         if (isAnimating) return
         if (gameStage == GameStage.LAYOUT) {
             handleLayoutClick(pos, clicker)
@@ -932,6 +1017,7 @@ class MainActivity : AppCompatActivity() {
      * 设置玩家就绪
      */
     fun setPlayerReady(player: Player) {
+        if (barrierActive) return
         // 布防判定
         val myLayout = boardState.filter { it.value.owner == player }
         if (!GameEngine.verifyLayout(myLayout, player)) {
@@ -1017,6 +1103,7 @@ class MainActivity : AppCompatActivity() {
      * - 0 或 25（空盘/满盘）：整盘收回托盘后重新洗牌生成（满盘即"再点一次换阵"）。
      */
     fun autoLayout(player: Player) {
+        if (barrierActive) return
         if (gameStage != GameStage.LAYOUT) return
         val onBoard = boardState.count { it.value.owner == player }
         if (onBoard in 1..24) incrementalLayout(player) else fullAutoLayout(player)
